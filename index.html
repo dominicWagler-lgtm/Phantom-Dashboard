@@ -1,4 +1,21 @@
-<!DOCTYPE html>
+import discord
+from discord.ext import commands
+from discord import ui
+from aiohttp import web
+import os
+
+intents = discord.Intents.default()
+intents.guilds = True
+intents.members = True
+intents.guild_messages = True
+intents.message_content = True
+
+bot = commands.Bot(command_prefix="!", intents=intents)
+
+# =========================================================
+#  HTML DASHBOARD CODE (DIREKT INTEGRIERT - KEINE API PROBLEME)
+# =========================================================
+HTML_DASHBOARD = """<!DOCTYPE html>
 <html lang="de" class="dark">
 <head>
     <meta charset="UTF-8">
@@ -8,7 +25,6 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #070709; color: #f3f4f6; }
-        
         .nav-btn {
             background-color: #111116;
             color: #9ca3af;
@@ -72,11 +88,6 @@
                     <span class="text-base">➕</span>
                     <span>Bot auf Server einladen</span>
                 </a>
-            </div>
-
-            <div class="mt-8 pt-6 border-t border-[#1f1f28]">
-                <div class="text-[10px] text-gray-500 mb-2 uppercase font-extrabold tracking-widest">API Gateway URL</div>
-                <input type="text" id="apiUrlInput" value="http://localhost:8080" class="w-full bg-[#070709] border border-[#22222d] rounded-xl px-3 py-2 text-xs text-blue-400 focus:outline-none focus:border-blue-500 font-mono">
             </div>
         </div>
         <div class="text-[10px] text-gray-600 text-center border-t border-[#1f1f28] pt-4 font-mono">Owner ID: 1523728380476919910</div>
@@ -223,10 +234,8 @@
         function switchSection(sectionId, btnElement) {
             document.querySelectorAll('.admin-section').forEach(sec => sec.classList.add('hidden'));
             document.getElementById(`sec-${sectionId}`).classList.remove('hidden');
-
             document.querySelectorAll('#navMenu .nav-btn').forEach(b => b.classList.remove('active'));
             if(btnElement) btnElement.classList.add('active');
-
             sidebar.classList.add('-translate-x-full');
             overlay.classList.add('hidden');
         }
@@ -236,11 +245,10 @@
 
         async function fetchBotServers() {
             const container = document.getElementById('serverListContainer');
-            const baseUrl = document.getElementById('apiUrlInput').value.trim();
             container.innerHTML = `<div class="text-center text-xs text-gray-400 py-8">Verbinde mit API...</div>`;
 
             try {
-                const response = await fetch(`${baseUrl}/api/bot-servers`, { signal: AbortSignal.timeout(4000) });
+                const response = await fetch('/api/bot-servers');
                 const servers = await response.json();
                 
                 document.getElementById('statGuilds').innerText = servers.length;
@@ -266,7 +274,7 @@
                 });
                 container.innerHTML = html;
             } catch (error) {
-                container.innerHTML = `<div class="text-center text-xs text-red-400 py-8">API nicht erreichbar. Prüfe die URL unten in der Sidebar.</div>`;
+                container.innerHTML = `<div class="text-center text-xs text-red-400 py-8">API nicht erreichbar.</div>`;
             }
         }
 
@@ -277,12 +285,11 @@
         }
 
         async function updateBotStatus() {
-            const baseUrl = document.getElementById('apiUrlInput').value.trim();
             const type = document.getElementById('statusType').value;
             const text = document.getElementById('statusText').value;
 
             try {
-                const res = await fetch(`${baseUrl}/api/admin/status`, {
+                const res = await fetch('/api/admin/status', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ type, text })
@@ -296,12 +303,11 @@
 
         async function sendVerification() {
             if(!selectedServerId) { alert('Bitte wähle zuerst oben einen Server aus!'); openServerModal(); return; }
-            const baseUrl = document.getElementById('apiUrlInput').value.trim();
             const channel = document.getElementById('verifyChannel').value;
             const role = document.getElementById('verifyRole').value;
 
             try {
-                const res = await fetch(`${baseUrl}/api/guilds/${selectedServerId}/verify`, {
+                const res = await fetch(`/api/guilds/${selectedServerId}/verify`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ channel, role })
@@ -315,12 +321,10 @@
 
         async function triggerLockdown(action) {
             if(!selectedServerId) { alert('Bitte wähle zuerst oben einen Server aus!'); openServerModal(); return; }
-            const baseUrl = document.getElementById('apiUrlInput').value.trim();
-
             if(!confirm(action === 'lock' ? 'Möchtest du wirklich den gesamten Server sperren?' : 'Server wieder entsperren?')) return;
 
             try {
-                const res = await fetch(`${baseUrl}/api/guilds/${selectedServerId}/lockdown`, {
+                const res = await fetch(`/api/guilds/${selectedServerId}/lockdown`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action })
@@ -338,3 +342,139 @@
     </script>
 </body>
 </html>
+"""
+
+# =========================================================
+#  VERIFIZIERUNG SYSTEM LOGIK
+# =========================================================
+class VerifyButton(ui.Button):
+    def __init__(self, role_name: str):
+        super().__init__(label="✅ Verifizieren", style=discord.ButtonStyle.green, custom_id="dashboard_verify_btn")
+        self.role_name = role_name
+
+    async def callback(self, interaction: discord.Interaction):
+        role = discord.utils.get(interaction.guild.roles, name=self.role_name)
+        if not role:
+            role = discord.utils.get(interaction.guild.roles, name="Mitglied")
+        
+        if role:
+            try:
+                await interaction.user.add_roles(role)
+                await interaction.response.send_message(f"Erfolgreich verifiziert! Du hast die Rolle **{role.name}** erhalten.", ephemeral=True)
+            except Exception:
+                await interaction.response.send_message("Fehler: Der Bot hat keine Berechtigung, dir diese Rolle zu geben.", ephemeral=True)
+        else:
+            await interaction.response.send_message(f"Die Verifizierungs-Rolle ('{self.role_name}') wurde nicht gefunden!", ephemeral=True)
+
+class VerifyView(ui.View):
+    def __init__(self, role_name: str):
+        super().__init__(timeout=None)
+        self.add_item(VerifyButton(role_name))
+
+
+# =========================================================
+#  WEB-SERVER API ROUTEN
+# =========================================================
+async def serve_dashboard(request):
+    return web.Response(text=HTML_DASHBOARD, content_type='text/html')
+
+async def api_get_bot_servers(request):
+    servers_data = []
+    for guild in bot.guilds:
+        servers_data.append({
+            "id": str(guild.id),
+            "name": guild.name,
+            "memberCount": guild.member_count
+        })
+    return web.json_response(servers_data)
+
+async def api_admin_status(request):
+    try:
+        data = await request.json()
+        status_type = data.get("type", "playing")
+        text = data.get("text", "Phantom Bot")
+        
+        activity_types = {
+            "playing": discord.ActivityType.playing,
+            "streaming": discord.ActivityType.streaming,
+            "listening": discord.ActivityType.listening,
+            "watching": discord.ActivityType.watching
+        }
+        
+        act = discord.Activity(type=activity_types.get(status_type, discord.ActivityType.playing), name=text)
+        await bot.change_presence(activity=act)
+        return web.json_response({"success": True})
+    except Exception as e:
+        return web.json_response({"success": False, "error": str(e)}, status=500)
+
+async def api_admin_verify(request):
+    guild_id = request.match_info.get('guild_id')
+    try:
+        data = await request.json()
+        channel_name = data.get("channel", "verifizierung")
+        role_name = data.get("role", "Mitglied")
+        
+        guild = bot.get_guild(int(guild_id))
+        if not guild:
+            return web.json_response({"success": False, "error": "Server nicht gefunden."}, status=404)
+            
+        target_channel = discord.utils.get(guild.text_channels, name=channel_name.replace("#", "").strip())
+        if not target_channel:
+            target_channel = guild.text_channels[0] if guild.text_channels else None
+            
+        if target_channel:
+            embed = discord.Embed(
+                title="🔐 Server Verifizierung",
+                description="Klicke auf den Button unten, um dich zu verifizieren!",
+                color=0x3b82f6
+            )
+            await target_channel.send(embed=embed, view=VerifyView(role_name))
+            return web.json_response({"success": True})
+        else:
+            return web.json_response({"success": False, "error": "Kein Kanal gefunden."}, status=400)
+    except Exception as e:
+        return web.json_response({"success": False, "error": str(e)}, status=500)
+
+async def api_admin_lockdown(request):
+    guild_id = request.match_info.get('guild_id')
+    try:
+        data = await request.json()
+        action = data.get("action", "lock")
+        
+        guild = bot.get_guild(int(guild_id))
+        if not guild:
+            return web.json_response({"success": False, "error": "Server nicht gefunden."}, status=404)
+            
+        count = 0
+        for channel in guild.text_channels:
+            overwrite = channel.overwrites_for(guild.default_role)
+            overwrite.send_messages = False if action == "lock" else True
+            await channel.set_permissions(guild.default_role, overwrite=overwrite)
+            count += 1
+            
+        msg = f"Server erfolgreich gesperrt ({count} Kanäle)." if action == "lock" else f"Server entsperrt ({count} Kanäle)."
+        return web.json_response({"success": True, "message": msg})
+    except Exception as e:
+        return web.json_response({"success": False, "error": str(e)}, status=500)
+
+async def start_web_server():
+    app = web.Application()
+    app.router.add_get('/', serve_dashboard)
+    app.router.add_get('/api/bot-servers', api_get_bot_servers)
+    app.router.add_post('/api/admin/status', api_admin_status)
+    app.router.add_post('/api/guilds/{guild_id}/verify', api_admin_verify)
+    app.router.add_post('/api/guilds/{guild_id}/lockdown', api_admin_lockdown)
+    
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, '0.0.0.0', 8080)
+    await site.start()
+    print("🌐 Alles bereit! Öffne dein Dashboard unter: http://localhost:8080")
+
+@bot.event
+async def on_ready():
+    print(f'Eingeloggt als Bot: {bot.user.name}')
+    bot.loop.create_task(start_web_server())
+
+# Trage hier deinen Bot Token ein:
+bot.run("MTUzNDY3NzE2MDg3MzI5NjA2NA.GQOB5q.yOCEf8qLndjPRKKteiZZzjyXh6vwFelTO06wsk")
