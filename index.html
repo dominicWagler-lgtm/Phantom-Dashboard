@@ -33,7 +33,7 @@
                 <li><a href="https://discord.com/oauth2/authorize?client_id=1534677160873296064&permissions=8&integration_type=0&scope=bot+applications.commands" target="_blank" class="block text-blue-400 font-semibold mt-4">Bot einladen</a></li>
             </ul>
             
-            <!-- Admin Menu Section (Nur für die Owner ID sichtbar) -->
+            <!-- Owner Steuerung (Wird per Skript nur für die ID freigeschaltet) -->
             <div id="adminMenuSection" class="mt-8 pt-6 border-t border-[#22222a] hidden">
                 <div class="text-[10px] text-red-400 mb-2 uppercase">Owner Steuerung</div>
                 <button id="toggleAdminBtn" class="text-red-400 font-semibold text-sm text-left w-full hover:text-red-300">⚡ Admin Panel öffnen</button>
@@ -43,7 +43,7 @@
 
     <div id="overlay" class="fixed inset-0 bg-black/50 z-[50] hidden"></div>
 
-    <!-- Admin Panel -->
+    <!-- Admin Panel (Standardmäßig komplett unsichtbar für Fremde) -->
     <section id="admin-panel" class="px-6 pb-6 pt-12 hidden">
         <div class="max-w-md mx-auto bg-[#121216] border border-red-500/40 p-6 rounded-2xl">
             <h2 class="text-sm font-bold text-red-400 mb-4 uppercase">⚡ Admin Management</h2>
@@ -59,7 +59,7 @@
                 </div>
             </div>
 
-            <button onclick="alert('Owner-Rolle wurde erfolgreich vom Bot angefordert und zugewiesen!')" class="w-full bg-yellow-600/20 border border-yellow-500/30 text-yellow-400 text-xs py-2 rounded-xl mb-2 hover:bg-yellow-600/30">Owner Rolle anfordern</button>
+            <button onclick="alert('Owner-Rolle erfolgreich angefordert!')" class="w-full bg-yellow-600/20 border border-yellow-500/30 text-yellow-400 text-xs py-2 rounded-xl mb-2 hover:bg-yellow-600/30">Owner Rolle anfordern</button>
             <button onclick="document.getElementById('admin-panel').classList.add('hidden')" class="w-full text-gray-500 text-[10px] hover:text-gray-300">Panel schließen</button>
         </div>
     </section>
@@ -90,8 +90,13 @@
     </header>
 
     <script>
-        const ownerDiscordID = "1523728380476919910";
-        const currentUserDiscordID = "1523728380476919910"; 
+        // Deine feste Owner ID
+        const allowedOwnerID = "1523728380476919910";
+
+        // Hier wird geprüft, ob du eingeloggt bist (Aktuell über URL-Anhang oder Speicher, standardmäßig gesperrt)
+        // Beispiel: Wenn du den Link mit "?owner=1523728380476919910" aufrufst, schaltet es sich für dich frei.
+        const urlParams = new URLSearchParams(window.location.search);
+        let currentUser = urlParams.get('owner') || localStorage.getItem('phantom_user');
 
         const menuBtn = document.getElementById('menuBtn');
         const closeBtn = document.getElementById('closeBtn');
@@ -116,7 +121,9 @@
             overlay.classList.add('hidden');
         });
 
-        if (currentUserDiscordID === ownerDiscordID) {
+        // Sicherheitsprüfung: Nur wenn die ID exakt übereinstimmt, wird das Admin-Zeug im Menü angezeigt
+        if (currentUser === allowedOwnerID) {
+            localStorage.setItem('phantom_user', allowedOwnerID); // Merkt sich, dass du es bist
             adminMenuSection.classList.remove('hidden');
             
             toggleAdminBtn.addEventListener('click', () => { 
