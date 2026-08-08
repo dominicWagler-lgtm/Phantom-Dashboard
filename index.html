@@ -15,8 +15,15 @@
     <!-- Navbar -->
     <nav class="sticky top-0 z-50 bg-[#0a0a0c]/85 backdrop-blur-md border-b border-[#22222a]">
         <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-            <button id="menuBtn" class="focus:outline-none"><svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
-            <span class="font-bold tracking-tight">Phantom Dashboard</span>
+            <div class="flex items-center space-x-3">
+                <button id="menuBtn" class="focus:outline-none"><svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+                <span class="font-bold tracking-tight">Phantom Dashboard</span>
+            </div>
+            <div id="authContainer">
+                <a id="discordLoginBtn" href="#" class="text-xs bg-[#5865F2] hover:bg-[#4752C4] text-white font-semibold px-4 py-2 rounded-xl transition-all inline-flex items-center space-x-2">
+                    <span>Mit Discord verifizieren</span>
+                </a>
+            </div>
         </div>
     </nav>
 
@@ -28,16 +35,15 @@
                 <button id="closeBtn" class="text-gray-400 text-xl font-bold p-1 focus:outline-none hover:text-white">✕</button>
             </div>
             
-            <!-- Alle Menüpunkte vollständig -->
             <ul class="space-y-4 text-gray-300 text-sm">
                 <li><a href="#" class="hover:text-blue-400">Übersicht</a></li>
                 <li><a href="#servers" class="hover:text-blue-400">Server-Liste</a></li>
                 <li><a href="https://discord.com/oauth2/authorize?client_id=1534677160873296064&permissions=8&integration_type=0&scope=bot+applications.commands" target="_blank" class="block text-blue-400 font-semibold mt-4">Bot einladen</a></li>
             </ul>
             
-            <!-- Admin Menü Sektion (Erscheint nur für Owner) -->
+            <!-- Admin Menü (Wird per Script freigeschaltet) -->
             <div id="adminMenuSection" class="mt-8 pt-6 border-t border-[#22222a] hidden">
-                <div class="text-[10px] text-red-400 mb-2 uppercase">Owner Steuerung</div>
+                <div class="text-[10px] text-red-400 mb-2 uppercase font-bold">Owner Steuerung</div>
                 <button id="toggleAdminBtn" class="text-red-400 font-semibold text-sm text-left w-full hover:text-red-300">⚡ Admin Panel öffnen</button>
             </div>
         </div>
@@ -45,28 +51,24 @@
 
     <div id="overlay" class="fixed inset-0 bg-black/50 z-[50] hidden"></div>
 
-    <!-- Admin Panel -->
+    <!-- Admin Panel Popup -->
     <section id="admin-panel" class="fixed inset-0 z-[70] flex items-center justify-center p-6 hidden">
         <div class="bg-[#121216] border border-red-500/40 p-6 rounded-2xl w-full max-w-sm shadow-2xl">
             <h2 class="text-sm font-bold text-red-400 mb-4 uppercase">⚡ Admin Management</h2>
-            
-            <p class="text-[11px] text-gray-400 mb-4">Verwaltung für deinen Bot.</p>
+            <p class="text-[11px] text-gray-400 mb-4">Verwaltung für deinen Bot (Owner Mode aktiv).</p>
 
-            <!-- Server Liste Button -->
             <a href="https://top.gg/bot/1534677160873296064" target="_blank" 
                class="block w-full bg-[#1a1a20] border border-[#333] p-4 rounded-xl text-sm hover:border-blue-500 transition-colors mb-4">
-               <div class="font-bold text-blue-400">Bot-Server Liste anzeigen</div>
-               <div class="text-[10px] text-gray-500 mt-1">Zeigt alle Server auf Top.gg an.</div>
+               <div class="font-bold text-blue-400">Bot-Server Liste</div>
             </a>
 
             <button onclick="document.getElementById('admin-panel').classList.add('hidden')" class="w-full text-gray-500 text-[10px] hover:text-white border border-transparent hover:border-gray-600 py-2 rounded-xl transition-all">Panel schließen</button>
         </div>
     </section>
 
-    <!-- Hauptinhalt & Status -->
+    <!-- Hauptinhalt -->
     <section class="px-6 pt-12 pb-4 max-w-md mx-auto">
         <h1 class="text-3xl font-extrabold mb-6">Phantom <span class="text-blue-500">Dashboard</span></h1>
-        
         <div class="bg-[#121216] border border-[#22222a] p-5 rounded-2xl mb-4">
             <h3 class="text-[10px] text-gray-500 uppercase font-bold mb-2">System Status</h3>
             <div class="flex items-center justify-between">
@@ -74,45 +76,54 @@
                 <span class="text-green-500 text-xs font-bold px-2 py-1 bg-green-500/10 rounded-full">ONLINE</span>
             </div>
         </div>
-
-        <div class="bg-[#121216] border border-[#22222a] p-5 rounded-2xl">
-            <h3 class="text-[10px] text-gray-500 uppercase font-bold mb-2">Über den Bot</h3>
-            <p class="text-sm text-gray-300 leading-relaxed">
-                Willkommen beim Phantom Dashboard! Dein Tool für alle aktiven Bot-Server.
-            </p>
-        </div>
     </section>
 
     <script>
         const ownerID = "1523728380476919910";
-        const urlParams = new URLSearchParams(window.location.search);
+        const CLIENT_ID = "1534677160873296064";
+        const redirectUri = window.location.origin + window.location.pathname;
+        const discordLoginUrl = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=identify`;
         
-        // Wenn du den Link mit ?owner=... aufrufst, speichert er es sofort dauerhaft ab
-        if (urlParams.get('owner') === ownerID) {
-            localStorage.setItem('is_owner', 'true');
+        document.getElementById('discordLoginBtn').href = discordLoginUrl;
+
+        const fragment = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = fragment.get('access_token');
+
+        if (accessToken) {
+            localStorage.setItem('discord_token', accessToken);
+            window.history.replaceState({}, document.title, window.location.pathname);
         }
 
-        // Wenn der Browser weiß, dass du der Owner bist, zeige das Admin-Menü
-        if (localStorage.getItem('is_owner') === 'true') {
-            document.getElementById('adminMenuSection').classList.remove('hidden');
+        async function checkAuth() {
+            const token = localStorage.getItem('discord_token');
+            if (token) {
+                try {
+                    const response = await fetch('https://discord.com/api/users/@me', {
+                        headers: { authorization: `Bearer ${token}` }
+                    });
+                    if (response.ok) {
+                        const user = await response.json();
+                        document.getElementById('authContainer').innerHTML = `<span class="text-xs text-gray-400">Eingeloggt als ${user.username}</span>`;
+                        if (user.id === ownerID) {
+                            document.getElementById('adminMenuSection').classList.remove('hidden');
+                        }
+                    }
+                } catch (e) { localStorage.removeItem('discord_token'); }
+            }
         }
 
+        checkAuth();
+
+        // UI Listener
         const menuBtn = document.getElementById('menuBtn');
-        const closeBtn = document.getElementById('closeBtn');
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('overlay');
         const adminPanel = document.getElementById('admin-panel');
-        const toggleAdminBtn = document.getElementById('toggleAdminBtn');
-
-        menuBtn.addEventListener('click', () => { sidebar.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); });
-        closeBtn.addEventListener('click', () => { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); });
-        overlay.addEventListener('click', () => { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); });
         
-        toggleAdminBtn.addEventListener('click', () => { 
-            adminPanel.classList.remove('hidden'); 
-            sidebar.classList.add('-translate-x-full'); 
-            overlay.classList.add('hidden'); 
-        });
+        menuBtn.addEventListener('click', () => { sidebar.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); });
+        overlay.addEventListener('click', () => { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); });
+        document.getElementById('closeBtn').addEventListener('click', () => { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); });
+        document.getElementById('toggleAdminBtn').addEventListener('click', () => { adminPanel.classList.remove('hidden'); sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); });
     </script>
 </body>
 </html>
