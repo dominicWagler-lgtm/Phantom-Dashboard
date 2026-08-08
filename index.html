@@ -44,7 +44,6 @@ HTML_DASHBOARD = f"""<!DOCTYPE html>
 </head>
 <body class="bg-[#070709] text-gray-100 font-sans flex min-h-screen">
 
-    <!-- Linke Leiste mit bewegtem blauen Strahl -->
     <div class="w-64 bg-[#111116] border-r border-[#1f1f28] p-6 flex flex-col justify-between animated-beam-container">
         <div class="absolute inset-y-0 left-0 w-1 pointer-events-none">
             <div class="animated-beam"></div>
@@ -60,9 +59,8 @@ HTML_DASHBOARD = f"""<!DOCTYPE html>
         <div class="text-[10px] text-gray-600 font-mono">Owner Panel</div>
     </div>
 
-    <!-- Hauptbereich -->
-    <div class="flex-grow p-10">
-        <div class="max-w-xl mx-auto bg-[#111116] p-6 rounded-2xl border border-[#1f1f28] shadow-xl">
+    <div class="flex-grow p-10 flex items-center justify-center">
+        <div class="max-w-xl w-full bg-[#111116] p-6 rounded-2xl border border-[#1f1f28] shadow-xl">
             <h1 class="text-lg font-bold text-blue-400 mb-4">Phantom Admin Center</h1>
             <div id="authCheck" class="text-xs text-gray-400 mb-4">Überprüfe Berechtigung...</div>
             
@@ -77,10 +75,16 @@ HTML_DASHBOARD = f"""<!DOCTYPE html>
         const OWNER_ID = "{OWNER_ID}";
 
         async function init() {
-            let userParam = new URLSearchParams(window.location.search).get('userid');
+            const urlParams = new URLSearchParams(window.location.search);
+            let userParam = urlParams.get('userid');
+            
+            if (!userParam) {
+                window.location.href = window.location.pathname + '?userid=' + OWNER_ID;
+                return;
+            }
             
             if (userParam !== OWNER_ID) {
-                document.getElementById('authCheck').innerHTML = '<span class="text-red-400 font-bold">Zugriff verweigert! Nur der Owner hat hier Zutritt.</span>';
+                document.getElementById('authCheck'].innerHTML = '<span class="text-red-400 font-bold">Zugriff verweigert! Nur der Owner hat hier Zutritt.</span>';
                 return;
             }
 
