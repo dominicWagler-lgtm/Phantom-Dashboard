@@ -2,7 +2,6 @@ import os
 import discord
 from discord.ext import commands
 from discord import ui
-from aiohttp import web
 
 intents = discord.Intents.default()
 intents.guilds = True
@@ -11,135 +10,46 @@ intents.guild_messages = True
 intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
-OWNER_ID = "1523728380476919910"
 
-HTML_DASHBOARD = f"""<!DOCTYPE html>
-<html lang="de" class="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phantom Admin Panel</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @keyframes beamMove {{
-            0% {{ transform: translateY(-100%); }}
-            100% {{ transform: translateY(100%); }}
-        }}
-        .animated-beam-container {{
-            position: relative;
-            overflow: hidden;
-            border-left: 2px solid #3b82f6;
-            box-shadow: inset 10px 0 20px -10px rgba(59, 130, 246, 0.3);
-        }}
-        .animated-beam {{
-            position: absolute;
-            top: 0;
-            left: -2px;
-            width: 4px;
-            height: 50%;
-            background: linear-gradient(to bottom, transparent, #60a5fa, #ffffff, #3b82f6, transparent);
-            animation: beamMove 3s linear infinite;
-        }}
-    </style>
-</head>
-<body class="bg-[#070709] text-gray-100 font-sans flex min-h-screen">
+class VerifyButton(ui.Button):
+    def __init__(self, role_name: str):
+        super().__init__(label="✅ Verifizieren", style=discord.ButtonStyle.green, custom_id="verify_btn")
+        self.role_name = role_name
 
-    <div class="w-64 bg-[#111116] border-r border-[#1f1f28] p-6 flex flex-col justify-between animated-beam-container">
-        <div class="absolute inset-y-0 left-0 w-1 pointer-events-none">
-            <div class="animated-beam"></div>
-        </div>
-        <div>
-            <h2 class="text-xs font-black tracking-widest uppercase text-blue-400 mb-6">Navigation</h2>
-            <div class="space-y-2 text-xs">
-                <div class="p-3 bg-[#181822] text-blue-400 rounded-xl border border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.15)]">
-                    🎛️ Steuerzentrale
-                </div>
-            </div>
-        </div>
-        <div class="text-[10px] text-gray-600 font-mono">Owner Panel</div>
-    </div>
-
-    <div class="flex-grow p-10 flex items-center justify-center">
-        <div class="max-w-xl w-full bg-[#111116] p-6 rounded-2xl border border-[#1f1f28] shadow-xl">
-            <h1 class="text-lg font-bold text-blue-400 mb-4">Phantom Admin Center</h1>
-            <div id="authCheck" class="text-xs text-gray-400 mb-4">Überprüfe Berechtigung...</div>
-            
-            <div id="adminPanel" class="hidden space-y-4">
-                <p class="text-xs text-green-400">Willkommen, Owner! Zugriff gewährt.</p>
-                <div id="serverList" class="space-y-2"></div>
-            </div>
-        </div>
-    </div>
-    
-    <script>
-        const OWNER_ID = "{OWNER_ID}";
-
-        async function init() {
-            const urlParams = new URLSearchParams(window.location.search);
-            let userParam = urlParams.get('userid');
-            
-            if (!userParam) {
-                window.location.href = window.location.pathname + '?userid=' + OWNER_ID;
-                return;
-            }
-            
-            if (userParam !== OWNER_ID) {
-                document.getElementById('authCheck'].innerHTML = '<span class="text-red-400 font-bold">Zugriff verweigert! Nur der Owner hat hier Zutritt.</span>';
-                return;
-            }
-
-            document.getElementById('authCheck').style.display = 'none';
-            document.getElementById('adminPanel').classList.remove('hidden');
-            loadServers();
-        }
-
-        async function loadServers() {
-            try {
-                let res = await fetch('/api/bot-servers?userid=' + OWNER_ID);
-                let data = await res.json();
-                if(data.error) {
-                    document.getElementById('serverList').innerHTML = data.error;
-                    return;
-                }
-                let html = '';
-                data.forEach(s => {
-                    html += `<div class="p-3 bg-[#181822] rounded-xl flex justify-between items-center text-xs"><span>${s.name}</span><span class="text-blue-400">${s.memberCount} Mitglieder</span></div>`;
-                });
-                document.getElementById('serverList').innerHTML = html || 'Keine Server gefunden.';
-            } catch(e) {
-                document.getElementById('serverList').innerHTML = 'Fehler beim Laden der API.';
-            }
-        }
-        init();
-    </script>
-</body>
-</html>"""
-
-async def serve_dashboard(request):
-    return web.Response(text=HTML_DASHBOARD, content_type='text/html')
-
-async def api_get_bot_servers(request):
-    user_id = request.query.get("userid")
-    if user_id != OWNER_ID:
-        return web.json_response({"error": "Zugriff verweigert. Keine Administrator-Rechte."}, status=403)
+    async def callback(self, interaction: discord.Interaction):
+        role = discord.utils.get(interaction.guild.roles, name=self.role_name)
+        if not role:
+            role = discord.utils.get(interaction.guild.roles, name="Mitglied")
         
-    servers_data = [{"id": str(g.id), "name": g.name, "memberCount": g.member_count} for g in bot.guilds]
-    return web.json_response(servers_data)
+        if role:
+            try:
+                await interaction.user.add_roles(role)
+                await interaction.response.send_message(f"Erfolgreich verifiziert! Du hast die Rolle **{role.name}** erhalten.", ephemeral=True)
+            except Exception:
+                await interaction.response.send_message("Fehler: Der Bot hat keine Berechtigung, dir diese Rolle zu geben.", ephemeral=True)
+        else:
+            await interaction.response.send_message(f"Die Verifizierungs-Rolle ('{self.role_name}') wurde nicht gefunden!", ephemeral=True)
 
-async def start_web_server():
-    app = web.Application()
-    app.router.add_get('/', serve_dashboard)
-    app.router.add_get('/api/bot-servers', api_get_bot_servers)
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', 8080)
-    await site.start()
-    print("Webserver läuft auf http://localhost:8080")
+class VerifyView(ui.View):
+    def __init__(self, role_name: str):
+        super().__init__(timeout=None)
+        self.add_item(VerifyButton(role_name))
+
+@bot.command()
+@commands.has_permissions(administrator=True)
+async def verify(ctx, channel: discord.TextChannel = None, *, role_name: str = "Mitglied"):
+    target_channel = channel or ctx.channel
+    embed = discord.Embed(
+        title="🔐 Server Verifizierung",
+        description="Klicke auf den Button unten, um dich zu verifizieren!",
+        color=0x3b82f6
+    )
+    await target_channel.send(embed=embed, view=VerifyView(role_name))
+    await ctx.message.delete()
 
 @bot.event
 async def on_ready():
     print(f'Eingeloggt als {bot.user.name}')
-    bot.loop.create_task(start_web_server())
 
 TOKEN = os.getenv("DISCORD_TOKEN")
 if TOKEN:
