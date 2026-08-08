@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phantom Dashboard</title>
+    <title>Phantom Dashboard - Admin & Server</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
@@ -27,14 +27,17 @@
                 <span class="font-bold text-sm text-gray-200">Menü</span>
                 <button id="closeBtn" class="text-gray-400 text-xl font-bold p-1 focus:outline-none hover:text-white">✕</button>
             </div>
+            
+            <!-- Alle Menüpunkte wieder vollständig -->
             <ul class="space-y-4 text-gray-300 text-sm">
                 <li><a href="#" class="hover:text-blue-400">Übersicht</a></li>
+                <li><a href="#servers" class="hover:text-blue-400">Server-Liste</a></li>
                 <li><a href="https://discord.com/oauth2/authorize?client_id=1534677160873296064&permissions=8&integration_type=0&scope=bot+applications.commands" target="_blank" class="block text-blue-400 font-semibold mt-4">Bot einladen</a></li>
             </ul>
             
-            <!-- Admin Menü Sektion (Wird durch JS sichtbar gemacht) -->
+            <!-- Admin Menü Sektion (Erscheint nur für Owner) -->
             <div id="adminMenuSection" class="mt-8 pt-6 border-t border-[#22222a] hidden">
-                <div class="text-[10px] text-red-400 mb-2 uppercase">Admin Steuerung</div>
+                <div class="text-[10px] text-red-400 mb-2 uppercase">Owner Steuerung</div>
                 <button id="toggleAdminBtn" class="text-red-400 font-semibold text-sm text-left w-full hover:text-red-300">⚡ Admin Panel öffnen</button>
             </div>
         </div>
@@ -42,54 +45,58 @@
 
     <div id="overlay" class="fixed inset-0 bg-black/50 z-[50] hidden"></div>
 
-    <!-- Admin Panel (Popup) -->
+    <!-- Admin Panel -->
     <section id="admin-panel" class="fixed inset-0 z-[70] flex items-center justify-center p-6 hidden">
         <div class="bg-[#121216] border border-red-500/40 p-6 rounded-2xl w-full max-w-sm shadow-2xl">
             <h2 class="text-sm font-bold text-red-400 mb-4 uppercase">⚡ Admin Management</h2>
             
-            <p class="text-[11px] text-gray-400 mb-4">Hier verwaltest du deine Bot-Instanz.</p>
+            <p class="text-[11px] text-gray-400 mb-4">Verwaltung für deinen Bot.</p>
 
-            <!-- Server Liste Link -->
+            <!-- Server Liste Button -->
             <a href="https://top.gg/bot/1534677160873296064" target="_blank" 
                class="block w-full bg-[#1a1a20] border border-[#333] p-4 rounded-xl text-sm hover:border-blue-500 transition-colors mb-4">
-               <div class="font-bold text-blue-400">Server-Liste ansehen</div>
-               <div class="text-[10px] text-gray-500 mt-1">Bot-Statistiken auf Top.gg</div>
+               <div class="font-bold text-blue-400">Bot-Server Liste anzeigen</div>
+               <div class="text-[10px] text-gray-500 mt-1">Zeigt alle Server auf Top.gg an.</div>
             </a>
 
             <button onclick="document.getElementById('admin-panel').classList.add('hidden')" class="w-full text-gray-500 text-[10px] hover:text-white border border-transparent hover:border-gray-600 py-2 rounded-xl transition-all">Panel schließen</button>
         </div>
     </section>
 
-    <!-- Hauptinhalt -->
+    <!-- Hauptinhalt & Status -->
     <section class="px-6 pt-12 pb-4 max-w-md mx-auto">
         <h1 class="text-3xl font-extrabold mb-6">Phantom <span class="text-blue-500">Dashboard</span></h1>
         
-        <div class="bg-[#121216] border border-[#22222a] p-5 rounded-2xl">
+        <div class="bg-[#121216] border border-[#22222a] p-5 rounded-2xl mb-4">
             <h3 class="text-[10px] text-gray-500 uppercase font-bold mb-2">System Status</h3>
             <div class="flex items-center justify-between">
                 <span class="text-sm text-gray-300">Bot Verbindung</span>
                 <span class="text-green-500 text-xs font-bold px-2 py-1 bg-green-500/10 rounded-full">ONLINE</span>
             </div>
         </div>
+
+        <div class="bg-[#121216] border border-[#22222a] p-5 rounded-2xl">
+            <h3 class="text-[10px] text-gray-500 uppercase font-bold mb-2">Über den Bot</h3>
+            <p class="text-sm text-gray-300 leading-relaxed">
+                Willkommen beim Phantom Dashboard! Dein Tool für alle aktiven Bot-Server.
+            </p>
+        </div>
     </section>
 
     <script>
-        const allowedOwnerID = "1523728380476919910";
-        
-        // Logik für Admin-Zugriff
+        const ownerID = "1523728380476919910";
         const urlParams = new URLSearchParams(window.location.search);
         
-        // Prüfen, ob der Owner-Parameter in der URL ist
-        if (urlParams.get('owner') === allowedOwnerID) {
-            localStorage.setItem('phantom_user', allowedOwnerID);
+        // Wenn du den Link mit ?owner=... aufrufst, speichert er es sofort dauerhaft ab
+        if (urlParams.get('owner') === ownerID) {
+            localStorage.setItem('is_owner', 'true');
         }
 
-        // Prüfen, ob der Nutzer gespeichert ist
-        if (localStorage.getItem('phantom_user') === allowedOwnerID) {
+        // Wenn der Browser weiß, dass du der Owner bist, zeige das Admin-Menü
+        if (localStorage.getItem('is_owner') === 'true') {
             document.getElementById('adminMenuSection').classList.remove('hidden');
         }
 
-        // UI Event Listeners
         const menuBtn = document.getElementById('menuBtn');
         const closeBtn = document.getElementById('closeBtn');
         const sidebar = document.getElementById('sidebar');
@@ -101,7 +108,6 @@
         closeBtn.addEventListener('click', () => { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); });
         overlay.addEventListener('click', () => { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); });
         
-        // Admin Panel Toggle
         toggleAdminBtn.addEventListener('click', () => { 
             adminPanel.classList.remove('hidden'); 
             sidebar.classList.add('-translate-x-full'); 
