@@ -37,7 +37,7 @@
                 <li><a href="https://discord.com/oauth2/authorize?client_id=1534677160873296064&permissions=8&integration_type=0&scope=bot+applications.commands" target="_blank" class="block text-blue-400 font-semibold">Bot einladen</a></li>
             </ul>
             
-            <!-- Admin Menü (Direkt da) -->
+            <!-- Admin Menü -->
             <div id="adminMenuSection" class="mt-8 pt-6 border-t border-[#22222a]">
                 <div class="text-[10px] text-red-400 mb-2 uppercase font-bold">Owner Steuerung</div>
                 <button id="toggleAdminBtn" class="text-red-400 font-semibold text-sm hover:text-red-300 text-left w-full">⚡ Admin Panel</button>
@@ -53,11 +53,35 @@
         <div class="bg-[#121216] border border-red-500/40 p-6 rounded-2xl w-full max-w-sm shadow-2xl">
             <h2 class="text-sm font-bold text-red-400 mb-4 uppercase">Admin Management</h2>
             <p class="text-xs text-gray-400 mb-4">Willkommen im Owner-Bereich. Du hast die volle Kontrolle.</p>
+            
+            <!-- Neuer Button für das Bot-Server Live-Menü -->
+            <button id="openServerListBtn" class="w-full mb-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs py-3 rounded-xl transition-all shadow-lg">
+                🌐 Live Bot-Server Übersicht
+            </button>
+
             <button onclick="document.getElementById('admin-panel').classList.add('hidden')" class="w-full bg-[#22222a] text-gray-300 text-xs py-2 rounded-xl">Schließen</button>
         </div>
     </section>
 
-    <!-- Main Content -->
+    <!-- NEUES EXTRA MENÜ: Live Bot Server Viewer & Joiner -->
+    <section id="bot-servers-modal" class="fixed inset-0 z-[80] flex items-center justify-center p-4 hidden bg-black/80 backdrop-blur-sm">
+        <div class="bg-[#121216] border border-blue-500/40 p-6 rounded-2xl w-full max-w-lg shadow-2xl max-h-[85vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-sm font-bold text-blue-400 uppercase">Live Bot Server (Echtzeit)</h2>
+                <button onclick="document.getElementById('bot-servers-modal').classList.add('hidden')" class="text-gray-400 hover:text-white text-lg font-bold">✕</button>
+            </div>
+            <p class="text-xs text-gray-400 mb-4">Hier siehst du live, auf welchen Servern sich dein Bot aktuell befindet, und kannst direkt beitreten:</p>
+            
+            <!-- Server Liste Container -->
+            <div id="serverListContainer" class="space-y-3 overflow-y-auto flex-grow pr-1">
+                <div class="text-center text-xs text-gray-500 py-6">Lade Server-Daten...</div>
+            </div>
+
+            <button onclick="document.getElementById('bot-servers-modal').classList.add('hidden')" class="w-full mt-4 bg-[#22222a] text-gray-300 text-xs py-2.5 rounded-xl">Schließen</button>
+        </div>
+    </section>
+
+    <!-- Main Content (Dein Text exakt beibehalten) -->
     <main class="px-6 pt-12 max-w-md mx-auto flex-grow w-full">
         <h1 class="text-3xl font-extrabold mb-6">Phantom Dashboard</h1>
         <div class="bg-[#121216] border border-[#22222a] p-5 rounded-2xl">
@@ -70,10 +94,12 @@
         Phantom Bot System &copy; 2026
     </footer>
 
-    <!-- Script für Sidebar & Admin Panel -->
+    <!-- Script für Sidebar, Admin Panel & Live Bot Server -->
     <script>
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('overlay');
+        const adminPanel = document.getElementById('admin-panel');
+        const botServersModal = document.getElementById('bot-servers-modal');
         
         document.getElementById('menuBtn').onclick = () => { sidebar.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); };
         document.getElementById('closeBtn').onclick = () => { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); };
@@ -82,10 +108,49 @@
         const toggleAdminBtn = document.getElementById('toggleAdminBtn');
         if(toggleAdminBtn) {
             toggleAdminBtn.onclick = () => { 
-                document.getElementById('admin-panel').classList.remove('hidden'); 
+                adminPanel.classList.remove('hidden'); 
                 sidebar.classList.add('-translate-x-full'); 
                 overlay.classList.add('hidden'); 
             };
+        }
+
+        // Öffnet das Live Server Menü und simuliert/lädt die Serverliste
+        document.getElementById('openServerListBtn').onclick = () => {
+            adminPanel.classList.add('hidden');
+            botServersModal.classList.remove('hidden');
+            loadBotServers();
+        };
+
+        function loadBotServers() {
+            const container = document.getElementById('serverListContainer');
+            
+            // Beispiel-Daten (Hier greift der Bot normalerweise auf die API zu)
+            // Du kannst hier deine echten Server eintragen oder über einen Bot-Endpunkt abrufen.
+            const servers = [
+                { name: "Phantom Community & Support", members: "1,240", id: "1234567890", invite: "https://discord.gg/example1" },
+                { name: "Dominic's Lounge", members: "85", id: "0987654321", invite: "https://discord.gg/example2" }
+            ];
+
+            if (servers.length === 0) {
+                container.innerHTML = `<div class="text-center text-xs text-gray-500 py-6">Der Bot ist aktuell auf keinem Server.</div>`;
+                return;
+            }
+
+            let html = "";
+            servers.forEach(srv => {
+                html += `
+                    <div class="bg-[#1a1a22] border border-[#333] p-3.5 rounded-xl flex items-center justify-between">
+                        <div>
+                            <div class="font-bold text-sm text-white">${srv.name}</div>
+                            <div class="text-[10px] text-gray-400 mt-0.5">Mitglieder: ${srv.members} | ID: ${srv.id}</div>
+                        </div>
+                        <a href="${srv.invite}" target="_blank" class="bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-all shadow">
+                            Beitreten
+                        </a>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
         }
     </script>
 </body>
