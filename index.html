@@ -25,40 +25,37 @@
         <div>
             <div class="flex justify-between items-center mb-8"><span class="font-bold text-sm text-gray-200">Menü</span><button id="closeBtn" class="text-gray-400">✕</button></div>
             <ul class="space-y-4 text-gray-300 text-sm">
-                <li><a href="#" class="hover:text-blue-400">Übersicht</a>[span_3](start_span)[span_3](end_span)</li>
-                <li><a href="#servers" class="hover:text-blue-400">Server-Liste</a>[span_4](start_span)[span_4](end_span)</li>
-                <!-- Bot einladen Link mit korrekter Client-ID und Permissions -->
-                <li><a href="https://discord.com/oauth2/authorize?client_id=1534677160873296064&permissions=8&integration_type=0&scope=bot+applications.commands" target="_blank" class="block text-blue-400 font-semibold mt-4">Bot einladen</a>[span_5](start_span)[span_5](end_span)</li>
+                <li><a href="#" class="hover:text-blue-400">Übersicht</a></li>
+                <li><a href="#servers" class="hover:text-blue-400">Server-Liste</a></li>
+                <li><a href="https://discord.com/oauth2/authorize?client_id=1534677160873296064&permissions=8&integration_type=0&scope=bot+applications.commands" target="_blank" class="block text-blue-400 font-semibold mt-4">Bot einladen</a></li>
             </ul>
             <div id="adminMenuSection" class="mt-8 pt-6 border-t border-[#22222a] hidden">
-                <div class="text-[10px] text-red-400 mb-2 uppercase">Owner Steuerung</div>[span_6](start_span)[span_6](end_span)
-                <button id="toggleAdminBtn" class="text-red-400 font-semibold text-sm">⚡ Admin Panel öffnen</button>[span_7](start_span)[span_7](end_span)
+                <div class="text-[10px] text-red-400 mb-2 uppercase">Owner Steuerung</div>
+                <button id="toggleAdminBtn" class="text-red-400 font-semibold text-sm">⚡ Admin Panel öffnen</button>
             </div>
         </div>
     </div>
 
-    <div id="overlay" class="fixed inset-0 bg-black/50 z-[50] hidden"></div>[span_8](start_span)[span_8](end_span)
+    <div id="overlay" class="fixed inset-0 bg-black/50 z-[50] hidden"></div>
 
     <!-- Admin Panel (Standard hidden) -->
-    <section id="admin-panel" class="px-6 pb-6 pt-12 hidden">[span_9](start_span)[span_9](end_span)
+    <section id="admin-panel" class="px-6 pb-6 pt-12 hidden">
         <div class="max-w-md mx-auto bg-[#121216] border border-red-500/40 p-6 rounded-2xl">
-            <h2 class="text-sm font-bold text-red-400 mb-4 uppercase">⚡ Admin Management</h2>[span_10](start_span)[span_10](end_span)
+            <h2 class="text-sm font-bold text-red-400 mb-4 uppercase">⚡ Admin Management</h2>
             
-            <!-- Server Stats & Join -->
-            <div class="space-y-3 mb-6">[span_11](start_span)[span_11](end_span)
+            <div class="space-y-3 mb-6">
                 <div class="flex justify-between items-center bg-[#1a1a20] p-3 rounded-xl border border-[#22222a]">
-                    <span class="text-xs text-gray-300">Phantom Community</span>[span_12](start_span)[span_12](end_span)
-                    <a href="https://discord.gg/MG3rYnUZJV" target="_blank" class="text-[10px] bg-blue-600 px-2 py-1 rounded">Join</a>[span_13](start_span)[span_13](end_span)
+                    <span class="text-xs text-gray-300">Phantom Community</span>
+                    <a href="https://discord.gg/MG3rYnUZJV" target="_blank" class="text-[10px] bg-blue-600 px-2 py-1 rounded">Join</a>
                 </div>
                 <div class="flex justify-between items-center bg-[#1a1a20] p-3 rounded-xl border border-[#22222a]">
-                    <span class="text-xs text-gray-300">Gaming Lounge</span>[span_14](start_span)[span_14](end_span)
-                    <a href="https://discord.com" target="_blank" class="text-[10px] bg-blue-600 px-2 py-1 rounded">Join</a>[span_15](start_span)[span_15](end_span)
+                    <span class="text-xs text-gray-300">Gaming Lounge</span>
+                    <a href="https://discord.com" target="_blank" class="text-[10px] bg-blue-600 px-2 py-1 rounded">Join</a>
                 </div>
             </div>
 
-            <!-- Owner Rolle Button -->
-            <button onclick="alert('Owner-Rolle wurde erfolgreich vom Bot angefordert und zugewiesen!')" class="w-full bg-yellow-600/20 border border-yellow-500/30 text-yellow-400 text-xs py-2 rounded-xl mb-2">Owner Rolle anfordern</button>[span_16](start_span)[span_16](end_span)
-            <button onclick="document.getElementById('admin-panel').classList.add('hidden')" class="w-full text-gray-500 text-[10px]">Panel schließen</button>[span_17](start_span)[span_17](end_span)
+            <button onclick="alert('Owner-Rolle wurde erfolgreich vom Bot angefordert und zugewiesen!')" class="w-full bg-yellow-600/20 border border-yellow-500/30 text-yellow-400 text-xs py-2 rounded-xl mb-2">Owner Rolle anfordern</button>
+            <button onclick="document.getElementById('admin-panel').classList.add('hidden')" class="w-full text-gray-500 text-[10px]">Panel schließen</button>
         </div>
     </section>
 
@@ -84,7 +81,7 @@
 
     <!-- Main Content -->
     <header class="pt-4 pb-8 px-6 text-center">
-        <h1 class="text-3xl font-extrabold mb-3">Deine aktiven <br><span class="text-blue-500">Bot-Server.</span></h1>[span_18](start_span)[span_18](end_span)
+        <h1 class="text-3xl font-extrabold mb-3">Deine aktiven <br><span class="text-blue-500">Bot-Server.</span></h1>
     </header>
 
     <script>
@@ -92,13 +89,12 @@
         const sidebar = document.getElementById('sidebar');
         const adminPanel = document.getElementById('admin-panel');
         
-        menuBtn.addEventListener('click', () => { sidebar.classList.remove('-translate-x-full'); document.getElementById('overlay').classList.remove('hidden'); });[span_19](start_span)[span_19](end_span)
-        document.getElementById('closeBtn').addEventListener('click', () => { sidebar.classList.add('-translate-x-full'); document.getElementById('overlay').classList.add('hidden'); });[span_20](start_span)[span_20](end_span)
-        document.getElementById('toggleAdminBtn').addEventListener('click', () => { adminPanel.classList.remove('hidden'); sidebar.classList.add('-translate-x-full'); document.getElementById('overlay').classList.add('hidden'); });[span_21](start_span)[span_21](end_span)
+        menuBtn.addEventListener('click', () => { sidebar.classList.remove('-translate-x-full'); document.getElementById('overlay').classList.remove('hidden'); });
+        document.getElementById('closeBtn').addEventListener('click', () => { sidebar.classList.add('-translate-x-full'); document.getElementById('overlay').classList.add('hidden'); });
+        document.getElementById('toggleAdminBtn').addEventListener('click', () => { adminPanel.classList.remove('hidden'); sidebar.classList.add('-translate-x-full'); document.getElementById('overlay').classList.add('hidden'); });
         
-        // Owner-ID Check
-        if ("1523728380476919910" === "1523728380476919910") {[span_22](start_span)[span_22](end_span)
-            document.getElementById('adminMenuSection').classList.remove('hidden');[span_23](start_span)[span_23](end_span)
+        if ("1523728380476919910" === "1523728380476919910") {
+            document.getElementById('adminMenuSection').classList.remove('hidden');
         }
     </script>
 </body>
