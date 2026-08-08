@@ -3,152 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phantom Dashboard - Login erforderlich</title>
+    <title>Phantom Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #0a0a0c; color: white; }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen">
+<body class="flex flex-col min-h-screen justify-between">
 
-    <!-- Login-Sperre (Wird angezeigt, solange man nicht verifiziert ist) -->
-    <div id="loginGate" class="fixed inset-0 bg-[#0a0a0c] z-[9999] flex items-center justify-center p-4">
-        <div class="bg-[#121216] border border-[#22222a] p-8 rounded-2xl w-full max-w-md text-center shadow-2xl">
-            <h1 class="text-2xl font-extrabold mb-2">Phantom <span class="text-blue-500">Dashboard</span></h1>
-            <p class="text-xs text-gray-400 mb-6">Bitte verifiziere dich einmalig mit deinem Discord-Account, um Zugriff auf das Dashboard zu erhalten.</p>
+    <!-- Navbar -->
+    <nav class="sticky top-0 z-50 bg-[#0a0a0c]/85 backdrop-blur-md border-b border-[#22222a]">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <button id="menuBtn" class="focus:outline-none"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+                <span class="font-bold">Phantom Dashboard</span>
+            </div>
+            <div class="flex items-center space-x-3">
+                <span class="text-[10px] font-bold px-2.5 py-1 bg-green-500/10 text-green-400 border border-green-500/20 rounded-full">OWNER ADMIN</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <div id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-[#121216] border-r border-[#22222a] z-[60] transform -translate-x-full transition-transform duration-300 p-6 flex flex-col justify-between">
+        <div>
+            <div class="flex justify-between items-center mb-8">
+                <span class="font-bold text-sm">Menü</span>
+                <button id="closeBtn" class="text-gray-400 text-xl">✕</button>
+            </div>
+            <ul class="space-y-4 text-sm text-gray-300">
+                <li><a href="#" class="hover:text-blue-400">Übersicht</a></li>
+                <li><a href="https://discord.com/oauth2/authorize?client_id=1534677160873296064&permissions=8&integration_type=0&scope=bot+applications.commands" target="_blank" class="block text-blue-400 font-semibold">Bot einladen</a></li>
+            </ul>
             
-            <a id="discordLoginBtn" href="#" class="w-full bg-[#5865F2] hover:bg-[#4752C4] text-white font-semibold py-3 px-4 rounded-xl transition-all inline-flex items-center justify-center space-x-2 text-sm shadow-lg">
-                <span>Mit Discord verifizieren</span>
-            </a>
-            <div id="loginError" class="text-red-400 text-xs mt-4 hidden">Verifizierung fehlgeschlagen oder abgebrochen.</div>
+            <!-- Admin Menü -->
+            <div id="adminMenuSection" class="mt-8 pt-6 border-t border-[#22222a]">
+                <div class="text-[10px] text-red-400 mb-2 uppercase font-bold">Owner Steuerung</div>
+                <button id="toggleAdminBtn" class="text-red-400 font-semibold text-sm hover:text-red-300 text-left w-full">⚡ Admin Panel</button>
+            </div>
         </div>
+        <div class="text-[10px] text-gray-600 text-center">Owner ID: 1523728380476919910</div>
     </div>
 
-    <!-- Eigentliches Dashboard (Erst nach erfolgreicher Verifizierung sichtbar) -->
-    <div id="dashboardContent" class="hidden w-full min-h-screen flex flex-col justify-between">
-        
-        <!-- Navbar -->
-        <nav class="sticky top-0 z-50 bg-[#0a0a0c]/85 backdrop-blur-md border-b border-[#22222a]">
-            <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <button id="menuBtn" class="focus:outline-none"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
-                    <span class="font-bold">Phantom Dashboard</span>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <span id="userNameDisplay" class="text-xs text-gray-400"></span>
-                    <button onclick="logout()" class="text-xs bg-[#22222a] hover:bg-red-500/20 hover:text-red-400 px-3 py-1.5 rounded-xl transition-all">Logout</button>
-                </div>
-            </div>
-        </nav>
+    <div id="overlay" class="fixed inset-0 bg-black/50 z-[50] hidden"></div>
 
-        <!-- Sidebar -->
-        <div id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-[#121216] border-r border-[#22222a] z-[60] transform -translate-x-full transition-transform duration-300 p-6 flex flex-col justify-between">
-            <div>
-                <div class="flex justify-between items-center mb-8">
-                    <span class="font-bold text-sm">Menü</span>
-                    <button id="closeBtn" class="text-gray-400 text-xl">✕</button>
-                </div>
-                <ul class="space-y-4 text-sm text-gray-300">
-                    <li><a href="#" class="hover:text-blue-400">Übersicht</a></li>
-                    <li><a href="https://discord.com/oauth2/authorize?client_id=1534677160873296064&permissions=8&integration_type=0&scope=bot+applications.commands" target="_blank" class="block text-blue-400 font-semibold">Bot einladen</a></li>
-                </ul>
-                
-                <!-- Admin Menü (Nur für Owner ID: 1523728380476919910) -->
-                <div id="adminMenuSection" class="mt-8 pt-6 border-t border-[#22222a] hidden">
-                    <div class="text-[10px] text-red-400 mb-2 uppercase font-bold">Owner Steuerung</div>
-                    <button id="toggleAdminBtn" class="text-red-400 font-semibold text-sm hover:text-red-300 text-left w-full">⚡ Admin Panel</button>
-                </div>
-            </div>
-            <div class="text-[10px] text-gray-600 text-center">Phantom Security Core</div>
+    <!-- Admin Panel Modal -->
+    <section id="admin-panel" class="fixed inset-0 z-[70] flex items-center justify-center p-6 hidden">
+        <div class="bg-[#121216] border border-red-500/40 p-6 rounded-2xl w-full max-w-sm shadow-2xl">
+            <h2 class="text-sm font-bold text-red-400 mb-4 uppercase">Admin Management</h2>
+            <p class="text-xs text-gray-400 mb-4">Willkommen im Owner-Bereich. Hier hast du die volle Kontrolle.</p>
+            <button onclick="document.getElementById('admin-panel').classList.add('hidden')" class="w-full bg-[#22222a] text-gray-300 text-xs py-2 rounded-xl">Schließen</button>
         </div>
+    </section>
 
-        <div id="overlay" class="fixed inset-0 bg-black/50 z-[50] hidden"></div>
+    <!-- Main Content -->
+    <main class="px-6 pt-12 max-w-md mx-auto flex-grow w-full">
+        <h1 class="text-3xl font-extrabold mb-6">Phantom Dashboard</h1>
+        <div class="bg-[#121216] border border-[#22222a] p-5 rounded-2xl">
+            <h3 class="text-[10px] text-gray-500 uppercase font-bold mb-2">System Status</h3>
+            <p class="text-sm text-gray-300">Das Dashboard ist jetzt direkt ohne Sperre, Passwort oder Verifizierung erreichbar.</p>
+        </div>
+    </main>
+    
+    <footer class="border-t border-[#22222a] py-4 text-center text-xs text-gray-600">
+        Phantom Bot System &copy; 2026
+    </footer>
 
-        <!-- Admin Panel Modal -->
-        <section id="admin-panel" class="fixed inset-0 z-[70] flex items-center justify-center p-6 hidden">
-            <div class="bg-[#121216] border border-red-500/40 p-6 rounded-2xl w-full max-w-sm">
-                <h2 class="text-sm font-bold text-red-400 mb-4 uppercase">Admin Management</h2>
-                <p class="text-xs text-gray-400 mb-4">Erfolgreich als Server-Owner verifiziert.</p>
-                <button onclick="document.getElementById('admin-panel').classList.add('hidden')" class="w-full bg-[#22222a] text-gray-300 text-xs py-2 rounded-xl">Schließen</button>
-            </div>
-        </section>
-
-        <!-- Main Content -->
-        <main class="px-6 pt-12 max-w-md mx-auto flex-grow w-full">
-            <h1 class="text-3xl font-extrabold mb-6">Phantom Dashboard</h1>
-            <div class="bg-[#121216] border border-[#22222a] p-5 rounded-2xl">
-                <h3 class="text-[10px] text-gray-500 uppercase font-bold mb-2">Status</h3>
-                <p class="text-sm text-gray-300">Du bist erfolgreich eingeloggt und hast Zugriff auf das Dashboard.</p>
-            </div>
-        </main>
-        
-        <footer class="border-t border-[#22222a] py-4 text-center text-xs text-gray-600">
-            Phantom Bot System &copy; 2026
-        </footer>
-    </div>
-
-    <!-- Script für Sperre und Verifizierung -->
+    <!-- Script für Sidebar & Admin Panel Steuerung -->
     <script>
-        const ownerID = "1523728380476919910";
-        const CLIENT_ID = "1534677160873296064";
-        const redirectUri = window.location.href.split('#')[0];
-        
-        // Discord OAuth2 Link für den Sperrbildschirm
-        const discordLoginUrl = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=identify`;
-        document.getElementById('discordLoginBtn').href = discordLoginUrl;
-
-        // Prüfen ob Token in der URL nach Redirect zurückgegeben wurde
-        const hash = window.location.hash.substring(1);
-        const params = new URLSearchParams(hash);
-        const token = params.get('access_token');
-
-        if (token) {
-            localStorage.setItem('discord_token', token);
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }
-
-        async function verifyAndLoad() {
-            const savedToken = localStorage.getItem('discord_token');
-            
-            if (!savedToken) {
-                // Nicht eingeloggt: Sperre bleibt aktiv, Dashboard bleibt unsichtbar
-                return;
-            }
-
-            try {
-                const res = await fetch('https://discord.com/api/users/@me', {
-                    headers: { authorization: `Bearer ${savedToken}` }
-                });
-
-                if (res.ok) {
-                    const user = await res.json();
-                    
-                    // Verifizierung erfolgreich: Sperre entfernen, Dashboard anzeigen
-                    document.getElementById('loginGate').classList.add('hidden');
-                    document.getElementById('dashboardContent').classList.remove('hidden');
-                    
-                    document.getElementById('userNameDisplay').textContent = user.username;
-
-                    // Prüfen ob Owner
-                    if (user.id === ownerID) {
-                        document.getElementById('adminMenuSection').classList.remove('hidden');
-                    }
-                } else {
-                    // Token ungültig/abgelaufen -> Token löschen, Sperre bleibt
-                    localStorage.removeItem('discord_token');
-                }
-            } catch (e) {
-                console.error("Auth error", e);
-            }
-        }
-
-        function logout() {
-            localStorage.removeItem('discord_token');
-            window.location.reload(); // Lädt die Seite neu und zeigt wieder den Login-Bildschirm
-        }
-
-        // UI Event Listeners
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('overlay');
         
@@ -164,9 +87,6 @@
                 overlay.classList.add('hidden'); 
             };
         }
-
-        // Beim Laden direkt prüfen
-        verifyAndLoad();
     </script>
 </body>
 </html>
