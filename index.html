@@ -20,16 +20,56 @@ HTML_DASHBOARD = f"""<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Phantom Admin Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes beamMove {{
+            0% {{ transform: translateY(-100%); }}
+            100% {{ transform: translateY(100%); }}
+        }}
+        .animated-beam-container {{
+            position: relative;
+            overflow: hidden;
+            border-left: 2px solid #3b82f6;
+            box-shadow: inset 10px 0 20px -10px rgba(59, 130, 246, 0.3);
+        }}
+        .animated-beam {{
+            position: absolute;
+            top: 0;
+            left: -2px;
+            width: 4px;
+            height: 50%;
+            background: linear-gradient(to bottom, transparent, #60a5fa, #ffffff, #3b82f6, transparent);
+            animation: beamMove 3s linear infinite;
+        }}
+    </style>
 </head>
-<body class="bg-[#070709] text-gray-100 font-sans p-6">
-    <div class="max-w-xl mx-auto bg-[#111116] p-6 rounded-2xl border border-[#1f1f28] shadow-xl">
-        <h1 class="text-lg font-bold text-blue-400 mb-4">Phantom Admin Center</h1>
-        
-        <div id="authCheck" class="text-xs text-gray-400 mb-4">Überprüfe Berechtigung...</div>
-        
-        <div id="adminPanel" class="hidden space-y-4">
-            <p class="text-xs text-green-400">Willkommen, Owner! Zugriff gewährt.</p>
-            <div id="serverList" class="space-y-2"></div>
+<body class="bg-[#070709] text-gray-100 font-sans flex min-h-screen">
+
+    <!-- Linke Leiste mit bewegtem blauen Strahl -->
+    <div class="w-64 bg-[#111116] border-r border-[#1f1f28] p-6 flex flex-col justify-between animated-beam-container">
+        <div class="absolute inset-y-0 left-0 w-1 pointer-events-none">
+            <div class="animated-beam"></div>
+        </div>
+        <div>
+            <h2 class="text-xs font-black tracking-widest uppercase text-blue-400 mb-6">Navigation</h2>
+            <div class="space-y-2 text-xs">
+                <div class="p-3 bg-[#181822] text-blue-400 rounded-xl border border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.15)]">
+                    🎛️ Steuerzentrale
+                </div>
+            </div>
+        </div>
+        <div class="text-[10px] text-gray-600 font-mono">Owner Panel</div>
+    </div>
+
+    <!-- Hauptbereich -->
+    <div class="flex-grow p-10">
+        <div class="max-w-xl mx-auto bg-[#111116] p-6 rounded-2xl border border-[#1f1f28] shadow-xl">
+            <h1 class="text-lg font-bold text-blue-400 mb-4">Phantom Admin Center</h1>
+            <div id="authCheck" class="text-xs text-gray-400 mb-4">Überprüfe Berechtigung...</div>
+            
+            <div id="adminPanel" class="hidden space-y-4">
+                <p class="text-xs text-green-400">Willkommen, Owner! Zugriff gewährt.</p>
+                <div id="serverList" class="space-y-2"></div>
+            </div>
         </div>
     </div>
     
@@ -37,8 +77,6 @@ HTML_DASHBOARD = f"""<!DOCTYPE html>
         const OWNER_ID = "{OWNER_ID}";
 
         async function init() {
-            // Für den Test im Browser simulieren wir die Owner-Erkennung. 
-            // In einer echten Umgebung wird dies über die Discord OAuth2 Login-ID geprüft.
             let userParam = new URLSearchParams(window.location.search).get('userid');
             
             if (userParam !== OWNER_ID) {
