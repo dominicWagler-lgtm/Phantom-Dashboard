@@ -33,7 +33,6 @@
                 <li><a href="https://discord.com/oauth2/authorize?client_id=1534677160873296064&permissions=8&integration_type=0&scope=bot+applications.commands" target="_blank" class="block text-blue-400 font-semibold mt-4">Bot einladen</a></li>
             </ul>
             
-            <!-- Owner Steuerung (Wird per Skript nur für die ID freigeschaltet) -->
             <div id="adminMenuSection" class="mt-8 pt-6 border-t border-[#22222a] hidden">
                 <div class="text-[10px] text-red-400 mb-2 uppercase">Owner Steuerung</div>
                 <button id="toggleAdminBtn" class="text-red-400 font-semibold text-sm text-left w-full hover:text-red-300">⚡ Admin Panel öffnen</button>
@@ -43,20 +42,18 @@
 
     <div id="overlay" class="fixed inset-0 bg-black/50 z-[50] hidden"></div>
 
-    <!-- Admin Panel (Standardmäßig komplett unsichtbar für Fremde) -->
+    <!-- Admin Panel -->
     <section id="admin-panel" class="px-6 pb-6 pt-12 hidden">
         <div class="max-w-md mx-auto bg-[#121216] border border-red-500/40 p-6 rounded-2xl">
             <h2 class="text-sm font-bold text-red-400 mb-4 uppercase">⚡ Admin Management</h2>
             
-            <div class="space-y-3 mb-6">
-                <div class="flex justify-between items-center bg-[#1a1a20] p-3 rounded-xl border border-[#22222a]">
-                    <span class="text-xs text-gray-300">Phantom Community</span>
-                    <a href="https://discord.gg/MG3rYnUZJV" target="_blank" class="text-[10px] bg-blue-600 px-2 py-1 rounded">Join</a>
-                </div>
-                <div class="flex justify-between items-center bg-[#1a1a20] p-3 rounded-xl border border-[#22222a]">
-                    <span class="text-xs text-gray-300">Gaming Lounge</span>
-                    <a href="https://discord.com" target="_blank" class="text-[10px] bg-blue-600 px-2 py-1 rounded">Join</a>
-                </div>
+            <!-- Server Liste Button -->
+            <div class="mb-6">
+                <a href="https://top.gg/bot/1534677160873296064" target="_blank" 
+                   class="block w-full bg-[#1a1a20] border border-[#333] p-4 rounded-xl text-sm hover:border-blue-500 transition-colors">
+                   <div class="font-bold text-blue-400">Bot-Server Liste anzeigen</div>
+                   <div class="text-[10px] text-gray-500 mt-1">Hier siehst du, wo der Bot aktiv ist.</div>
+                </a>
             </div>
 
             <button onclick="alert('Owner-Rolle erfolgreich angefordert!')" class="w-full bg-yellow-600/20 border border-yellow-500/30 text-yellow-400 text-xs py-2 rounded-xl mb-2 hover:bg-yellow-600/30">Owner Rolle anfordern</button>
@@ -64,9 +61,10 @@
         </div>
     </section>
 
-    <!-- Bot Live Status Section -->
+    <!-- Bot Info & Status -->
     <section class="px-6 pt-8 pb-4 max-w-md mx-auto">
-        <div class="bg-[#121216] border border-[#22222a] p-4 rounded-2xl flex items-center justify-between">
+        <!-- Live Status -->
+        <div class="bg-[#121216] border border-[#22222a] p-4 rounded-2xl flex items-center justify-between mb-4">
             <div class="flex items-center space-x-3">
                 <span class="relative flex h-3 w-3">
                   <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -82,19 +80,23 @@
                 <div class="text-xs font-mono font-bold text-blue-400">18 ms</div>
             </div>
         </div>
+
+        <!-- Bio -->
+        <div class="bg-[#121216] border border-[#22222a] p-5 rounded-2xl">
+            <h3 class="text-[10px] text-gray-500 uppercase font-bold mb-2">Über den Bot</h3>
+            <p class="text-sm text-gray-300 leading-relaxed">
+                Willkommen beim Phantom Dashboard! Dein leistungsstarker Helfer für Discord. 
+                Hier kannst du alle deine Server verwalten und behältst den vollen Durchblick.
+            </p>
+        </div>
     </section>
 
-    <!-- Main Content -->
     <header class="pt-4 pb-8 px-6 text-center">
         <h1 class="text-3xl font-extrabold mb-3">Deine aktiven <br><span class="text-blue-500">Bot-Server.</span></h1>
     </header>
 
     <script>
-        // Deine feste Owner ID
         const allowedOwnerID = "1523728380476919910";
-
-        // Hier wird geprüft, ob du eingeloggt bist (Aktuell über URL-Anhang oder Speicher, standardmäßig gesperrt)
-        // Beispiel: Wenn du den Link mit "?owner=1523728380476919910" aufrufst, schaltet es sich für dich frei.
         const urlParams = new URLSearchParams(window.location.search);
         let currentUser = urlParams.get('owner') || localStorage.getItem('phantom_user');
 
@@ -106,31 +108,14 @@
         const adminMenuSection = document.getElementById('adminMenuSection');
         const toggleAdminBtn = document.getElementById('toggleAdminBtn');
 
-        menuBtn.addEventListener('click', () => { 
-            sidebar.classList.remove('-translate-x-full'); 
-            overlay.classList.remove('hidden'); 
-        });
+        menuBtn.addEventListener('click', () => { sidebar.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); });
+        closeBtn.addEventListener('click', () => { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); });
+        overlay.addEventListener('click', () => { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); });
 
-        closeBtn.addEventListener('click', () => { 
-            sidebar.classList.add('-translate-x-full'); 
-            overlay.classList.add('hidden'); 
-        });
-
-        overlay.addEventListener('click', () => {
-            sidebar.classList.add('-translate-x-full');
-            overlay.classList.add('hidden');
-        });
-
-        // Sicherheitsprüfung: Nur wenn die ID exakt übereinstimmt, wird das Admin-Zeug im Menü angezeigt
         if (currentUser === allowedOwnerID) {
-            localStorage.setItem('phantom_user', allowedOwnerID); // Merkt sich, dass du es bist
+            localStorage.setItem('phantom_user', allowedOwnerID);
             adminMenuSection.classList.remove('hidden');
-            
-            toggleAdminBtn.addEventListener('click', () => { 
-                adminPanel.classList.remove('hidden'); 
-                sidebar.classList.add('-translate-x-full'); 
-                overlay.classList.add('hidden'); 
-            });
+            toggleAdminBtn.addEventListener('click', () => { adminPanel.classList.remove('hidden'); sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); });
         }
     </script>
 </body>
