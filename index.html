@@ -58,13 +58,21 @@
                 <h2 class="text-sm font-bold text-blue-400 uppercase">Deine Bot-Server (Live API)</h2>
                 <button onclick="document.getElementById('bot-servers-modal').classList.add('hidden')" class="text-gray-400 hover:text-white text-lg font-bold cursor-pointer">✕</button>
             </div>
+            
+            <!-- API URL Eingabe für GitHub Pages -->
+            <div class="mb-4 bg-[#1a1a22] p-3 rounded-xl border border-[#333]">
+                <label class="block text-[10px] text-gray-400 uppercase font-bold mb-1">Bot API URL (z.B. dein Server)</label>
+                <input type="text" id="apiUrlInput" value="http://localhost:8080" class="w-full bg-[#0a0a0c] border border-[#444] rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500">
+            </div>
+
             <p class="text-xs text-gray-400 mb-4">Wähle einen Server aus, um das echte Ticket-System zu steuern:</p>
             
             <div id="serverListContainer" class="space-y-3 overflow-y-auto flex-grow pr-1">
-                <div class="text-center text-xs text-gray-500 py-6">Lade Server vom Bot...</div>
+                <div class="text-center text-xs text-gray-500 py-6">Klicke unten auf "Server laden"...</div>
             </div>
 
-            <button onclick="document.getElementById('bot-servers-modal').classList.add('hidden')" class="w-full mt-4 bg-[#22222a] text-gray-300 text-xs py-2.5 rounded-xl hover:bg-[#333] cursor-pointer">Schließen</button>
+            <button onclick="fetchBotServers()" class="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2.5 rounded-xl transition cursor-pointer">🔄 Server neu laden</button>
+            <button onclick="document.getElementById('bot-servers-modal').classList.add('hidden')" class="w-full mt-2 bg-[#22222a] text-gray-300 text-xs py-2.5 rounded-xl hover:bg-[#333] cursor-pointer">Schließen</button>
         </div>
     </section>
 
@@ -93,7 +101,7 @@
         <h1 class="text-3xl font-extrabold mb-6">Phantom Dashboard</h1>
         <div class="bg-[#121216] border border-[#22222a] p-5 rounded-2xl shadow-xl">
             <h3 class="text-[10px] text-gray-500 uppercase font-bold mb-2">Status</h3>
-            <p class="text-sm text-gray-300">Verbunden mit der Bot-API. Klicke links auf das Menü, um deine Server und das Ticket-System zu verwalten.</p>
+            <p class="text-sm text-gray-300">Öffne links das Menü, um deine Live-Server zu verwalten.</p>
         </div>
     </main>
     
@@ -120,10 +128,11 @@
 
         async function fetchBotServers() {
             const container = document.getElementById('serverListContainer');
-            container.innerHTML = `<div class="text-center text-xs text-gray-400 py-6">Lade Live-Server vom Bot...</div>`;
+            const baseUrl = document.getElementById('apiUrlInput').value.trim();
+            container.innerHTML = `<div class="text-center text-xs text-gray-400 py-6">Verbinde mit ${baseUrl} ...</div>`;
 
             try {
-                const response = await fetch('/api/bot-servers');
+                const response = await fetch(`${baseUrl}/api/bot-servers`, { signal: AbortSignal.timeout(4000) });
                 const servers = await response.json();
 
                 if (!servers || servers.length === 0) {
@@ -152,7 +161,11 @@
                 });
                 container.innerHTML = html;
             } catch (error) {
-                container.innerHTML = `<div class="text-center text-xs text-red-400 py-6">Fehler: Bot-API nicht erreichbar.</div>`;
+                container.innerHTML = `
+                    <div class="text-center text-xs text-red-400 py-6">
+                        Fehler: Bot-API nicht erreichbar.<br>
+                        <span class="text-[10px] text-gray-500">Stelle sicher, dass dein Bot online ist und die URL stimmt.</span>
+                    </div>`;
             }
         }
 
@@ -165,9 +178,10 @@
 
         async function sendTicketConfig() {
             const channelVal = document.getElementById('ticketChannelInput').value;
+            const baseUrl = document.getElementById('apiUrlInput').value.trim();
 
             try {
-                const res = await fetch(`/api/guilds/${selectedServerId}/ticket-config`, {
+                const res = await fetch(`${baseUrl}/api/guilds/${selectedServerId}/ticket-config`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ channel: channelVal })
