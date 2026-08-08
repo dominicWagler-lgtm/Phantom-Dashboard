@@ -1,340 +1,106 @@
-<!DOCTYPE html>
+import os
+import discord
+from discord.ext import commands
+from discord import ui
+from aiohttp import web
+
+intents = discord.Intents.default()
+intents.guilds = True
+intents.members = True
+intents.guild_messages = True
+intents.message_content = True
+
+bot = commands.Bot(command_prefix="!", intents=intents)
+OWNER_ID = "1523728380476919910"
+
+HTML_DASHBOARD = f"""<!DOCTYPE html>
 <html lang="de" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phantom Admin Command Center</title>
+    <title>Phantom Admin Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #070709; color: #f3f4f6; }
-        
-        .nav-btn {
-            background-color: #111116;
-            color: #9ca3af;
-            border: 1px solid #1f1f28;
-            transition: all 0.25s ease-in-out;
-        }
-        .nav-btn:hover {
-            background-color: #16161c;
-            color: #ffffff;
-            border-color: #3b82f6;
-        }
-        .nav-btn.active {
-            background: linear-gradient(90deg, rgba(59, 130, 246, 0.12) 0%, rgba(17, 17, 22, 0) 100%);
-            color: #60a5fa;
-            border-left: 4px solid #3b82f6;
-            border-color: rgba(59, 130, 246, 0.4);
-            box-shadow: inset 4px 0 12px -2px rgba(59, 130, 246, 0.25), 0 0 15px rgba(59, 130, 246, 0.1);
-        }
-    </style>
 </head>
-<body class="flex flex-col min-h-screen justify-between selection:bg-blue-500 selection:text-white">
-
-    <nav class="sticky top-0 z-50 bg-[#070709]/90 backdrop-blur-xl border-b border-[#1f1f28]">
-        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-            <div class="flex items-center space-x-4">
-                <button id="menuBtn" class="p-2 rounded-xl bg-[#111116] border border-[#1f1f28] text-gray-300 hover:text-white hover:border-blue-500 transition cursor-pointer">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-                </button>
-                <div class="flex items-center space-x-2">
-                    <div class="w-3 h-3 rounded-full bg-blue-500 animate-pulse"></div>
-                    <span class="font-extrabold tracking-wider text-sm text-white">PHANTOM // ADMIN PANEL</span>
-                </div>
-            </div>
-            <div class="flex items-center space-x-3">
-                <span class="text-[10px] font-extrabold px-3 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full tracking-wider">SYSTEM ONLINE</span>
-            </div>
+<body class="bg-[#070709] text-gray-100 font-sans p-6">
+    <div class="max-w-xl mx-auto bg-[#111116] p-6 rounded-2xl border border-[#1f1f28] shadow-xl">
+        <h1 class="text-lg font-bold text-blue-400 mb-4">Phantom Admin Center</h1>
+        
+        <div id="authCheck" class="text-xs text-gray-400 mb-4">Überprüfe Berechtigung...</div>
+        
+        <div id="adminPanel" class="hidden space-y-4">
+            <p class="text-xs text-green-400">Willkommen, Owner! Zugriff gewährt.</p>
+            <div id="serverList" class="space-y-2"></div>
         </div>
-    </nav>
-
-    <div id="sidebar" class="fixed top-0 left-0 h-full w-80 bg-[#0d0d12] border-r border-[#1f1f28] z-[60] transform -translate-x-full transition-transform duration-300 p-6 flex flex-col justify-between shadow-2xl">
-        <div>
-            <div class="flex justify-between items-center mb-8">
-                <span class="text-xs font-black tracking-widest uppercase text-blue-400">Navigation</span>
-                <button id="closeBtn" class="w-8 h-8 rounded-lg bg-[#16161f] flex items-center justify-center text-gray-400 hover:text-white cursor-pointer">✕</button>
-            </div>
-            
-            <div class="space-y-2.5 text-xs font-semibold" id="navMenu">
-                <button onclick="switchSection('overview', this)" class="nav-btn active w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left cursor-pointer">
-                    <span class="text-base">🎛️</span>
-                    <span>Admin Steuerzentrale</span>
-                </button>
-                <button onclick="switchSection('verification', this)" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left cursor-pointer">
-                    <span class="text-base">🛡️</span>
-                    <span>Verifizierung & Security</span>
-                </button>
-                <button onclick="switchSection('botstatus', this)" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left cursor-pointer">
-                    <span class="text-base">🤖</span>
-                    <span>Bot Aktivität & Status</span>
-                </button>
-                <a href="https://discord.com/oauth2/authorize?client_id=1534677160873296064&permissions=8&integration_type=0&scope=bot+applications.commands" target="_blank" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left text-green-400 hover:border-green-500/50 transition">
-                    <span class="text-base">➕</span>
-                    <span>Bot auf Server einladen</span>
-                </a>
-            </div>
-
-            <div class="mt-8 pt-6 border-t border-[#1f1f28]">
-                <div class="text-[10px] text-gray-500 mb-2 uppercase font-extrabold tracking-widest">API Gateway URL</div>
-                <input type="text" id="apiUrlInput" value="http://localhost:8080" class="w-full bg-[#070709] border border-[#22222d] rounded-xl px-3 py-2 text-xs text-blue-400 focus:outline-none focus:border-blue-500 font-mono">
-            </div>
-        </div>
-        <div class="text-[10px] text-gray-600 text-center border-t border-[#1f1f28] pt-4 font-mono">Owner ID: 1523728380476919910</div>
     </div>
-
-    <div id="overlay" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[50] hidden"></div>
-
-    <main class="px-6 py-10 max-w-3xl mx-auto flex-grow w-full space-y-6">
-        
-        <div class="bg-[#111116] border border-[#1f1f28] p-6 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-                <span class="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">Aktiver Server</span>
-                <h1 id="activeServerName" class="text-lg font-bold text-white mt-2">Kein Server ausgewählt</h1>
-                <p class="text-xs text-gray-400 mt-0.5">Wähle deinen Discord-Server aus, um Befehle direkt auszuführen.</p>
-            </div>
-            <button onclick="openServerModal()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-5 py-3 rounded-xl transition cursor-pointer shadow-lg shadow-blue-600/20 flex items-center space-x-2">
-                <span>Server wählen</span>
-                <span>➔</span>
-            </button>
-        </div>
-
-        <div id="sec-overview" class="admin-section space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-[#111116] border border-[#1f1f28] p-5 rounded-2xl">
-                    <div class="text-gray-400 text-[10px] font-bold uppercase">Verbundene Server</div>
-                    <div id="statGuilds" class="text-2xl font-extrabold text-white mt-1">--</div>
-                    <div class="text-[10px] text-blue-400 mt-2">Live verbunden</div>
-                </div>
-                <div class="bg-[#111116] border border-[#1f1f28] p-5 rounded-2xl">
-                    <div class="text-gray-400 text-[10px] font-bold uppercase">Sicherheits-Status</div>
-                    <div class="text-2xl font-extrabold text-green-400 mt-1">Optimal</div>
-                    <div class="text-[10px] text-gray-500 mt-2">Firewall aktiv</div>
-                </div>
-                <div class="bg-[#111116] border border-[#1f1f28] p-5 rounded-2xl">
-                    <div class="text-gray-400 text-[10px] font-bold uppercase">API Ping</div>
-                    <div class="text-2xl font-extrabold text-blue-400 mt-1">&lt; 10ms</div>
-                    <div class="text-[10px] text-blue-400/80 mt-2">High-Speed</div>
-                </div>
-            </div>
-
-            <div class="bg-[#111116] border border-red-500/20 p-6 rounded-2xl shadow-xl space-y-4">
-                <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 rounded-xl bg-red-500/10 flex items-center justify-center text-red-400 font-bold">🚨</div>
-                    <div>
-                        <h3 class="text-sm font-extrabold text-red-400 uppercase tracking-wide">Notfall-Server-Lockdown</h3>
-                        <p class="text-xs text-gray-400">Sperrt alle Textkanäle des gewählten Servers für Mitglieder.</p>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3 pt-2">
-                    <button onclick="triggerLockdown('lock')" class="bg-red-600 hover:bg-red-500 text-white text-xs font-bold py-3 rounded-xl transition cursor-pointer shadow-lg">
-                        🔒 Server Sperren
-                    </button>
-                    <button onclick="triggerLockdown('unlock')" class="bg-[#181822] hover:bg-[#22222f] text-gray-300 text-xs font-bold py-3 rounded-xl transition border border-[#262635] cursor-pointer">
-                        🔓 Entsperren
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div id="sec-verification" class="admin-section space-y-6 hidden">
-            <div class="bg-[#111116] border border-[#1f1f28] p-6 rounded-2xl shadow-xl space-y-4">
-                <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 rounded-xl bg-green-500/10 flex items-center justify-center text-green-400 font-bold">🛡️</div>
-                    <div>
-                        <h3 class="text-sm font-extrabold text-green-400 uppercase tracking-wide">Verifizierungs-System</h3>
-                        <p class="text-xs text-gray-400">Sendet ein interaktives Button-Panel in den angegebenen Kanal.</p>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                    <div>
-                        <label class="block text-[10px] text-gray-400 mb-1 font-bold uppercase">Kanal Name</label>
-                        <input type="text" id="verifyChannel" value="verifizierung" class="w-full bg-[#070709] border border-[#22222d] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-green-500">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] text-gray-400 mb-1 font-bold uppercase">Rolle bei Erfolg</label>
-                        <input type="text" id="verifyRole" value="Mitglied" class="w-full bg-[#070709] border border-[#22222d] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-green-500">
-                    </div>
-                </div>
-                <button onclick="sendVerification()" class="w-full bg-green-600 hover:bg-green-500 text-white text-xs font-bold py-3 rounded-xl transition shadow-lg cursor-pointer">
-                    ✨ Verifizierungs-Panel Senden
-                </button>
-            </div>
-        </div>
-
-        <div id="sec-botstatus" class="admin-section space-y-6 hidden">
-            <div class="bg-[#111116] border border-[#1f1f28] p-6 rounded-2xl shadow-xl space-y-4">
-                <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 font-bold">🤖</div>
-                    <div>
-                        <h3 class="text-sm font-extrabold text-blue-400 uppercase tracking-wide">Bot Aktivitäts-Manager</h3>
-                        <p class="text-xs text-gray-400">Ändere live, was der Bot auf Discord anzeigt.</p>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                    <div>
-                        <label class="block text-[10px] text-gray-400 mb-1 font-bold uppercase">Aktivität</label>
-                        <select id="statusType" class="w-full bg-[#070709] border border-[#22222d] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
-                            <option value="playing">Spielt</option>
-                            <option value="streaming">Streamt</option>
-                            <option value="listening">Hört zu</option>
-                            <option value="watching">Schaut zu</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] text-gray-400 mb-1 font-bold uppercase">Text</label>
-                        <input type="text" id="statusText" value="Phantom Core v2.0" class="w-full bg-[#070709] border border-[#22222d] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
-                    </div>
-                </div>
-                <button onclick="updateBotStatus()" class="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-3 rounded-xl transition shadow-lg cursor-pointer">
-                    ✨ Bot Status Aktualisieren
-                </button>
-            </div>
-        </div>
-
-    </main>
-
-    <section id="server-modal" class="fixed inset-0 z-[80] flex items-center justify-center p-4 hidden bg-black/80 backdrop-blur-md">
-        <div class="bg-[#111116] border border-[#22222d] p-6 rounded-2xl w-full max-w-md shadow-2xl max-h-[85vh] flex flex-col">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xs font-black tracking-wider text-blue-400 uppercase">Wähle deinen Server</h2>
-                <button onclick="closeServerModal()" class="w-7 h-7 rounded-lg bg-[#181822] flex items-center justify-center text-gray-400 hover:text-white cursor-pointer">✕</button>
-            </div>
-            <div id="serverListContainer" class="space-y-3 overflow-y-auto flex-grow pr-1">
-                <div class="text-center text-xs text-gray-500 py-8">Lade Server...</div>
-            </div>
-            <button onclick="fetchBotServers()" class="w-full mt-4 bg-[#181822] hover:bg-[#22222f] text-gray-300 text-xs font-bold py-3 rounded-xl transition border border-[#262635] cursor-pointer">🔄 Liste Aktualisieren</button>
-        </div>
-    </section>
     
-    <footer class="border-t border-[#1f1f28] py-6 text-center text-xs text-gray-600 bg-[#070709]">
-        Phantom Admin Center &copy; 2026
-    </footer>
-
     <script>
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('overlay');
-        const serverModal = document.getElementById('server-modal');
-        let selectedServerId = null;
-        
-        document.getElementById('menuBtn').onclick = () => { sidebar.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); };
-        document.getElementById('closeBtn').onclick = () => { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); };
-        overlay.onclick = () => { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); };
+        const OWNER_ID = "{OWNER_ID}";
 
-        function switchSection(sectionId, btnElement) {
-            document.querySelectorAll('.admin-section').forEach(sec => sec.classList.add('hidden'));
-            document.getElementById(`sec-${sectionId}`).classList.remove('hidden');
+        async function init() {
+            // Für den Test im Browser simulieren wir die Owner-Erkennung. 
+            // In einer echten Umgebung wird dies über die Discord OAuth2 Login-ID geprüft.
+            let userParam = new URLSearchParams(window.location.search).get('userid');
+            
+            if (userParam !== OWNER_ID) {
+                document.getElementById('authCheck').innerHTML = '<span class="text-red-400 font-bold">Zugriff verweigert! Nur der Owner hat hier Zutritt.</span>';
+                return;
+            }
 
-            document.querySelectorAll('#navMenu .nav-btn').forEach(b => b.classList.remove('active'));
-            if(btnElement) btnElement.classList.add('active');
-
-            sidebar.classList.add('-translate-x-full');
-            overlay.classList.add('hidden');
+            document.getElementById('authCheck').style.display = 'none';
+            document.getElementById('adminPanel').classList.remove('hidden');
+            loadServers();
         }
 
-        function openServerModal() { serverModal.classList.remove('hidden'); fetchBotServers(); }
-        function closeServerModal() { serverModal.classList.add('hidden'); }
-
-        async function fetchBotServers() {
-            const container = document.getElementById('serverListContainer');
-            const baseUrl = document.getElementById('apiUrlInput').value.trim();
-            container.innerHTML = `<div class="text-center text-xs text-gray-400 py-8">Verbinde mit API...</div>`;
-
+        async function loadServers() {
             try {
-                const response = await fetch(`${baseUrl}/api/bot-servers`, { signal: AbortSignal.timeout(4000) });
-                const servers = await response.json();
-                
-                document.getElementById('statGuilds').innerText = servers.length;
-
-                if (!servers || servers.length === 0) {
-                    container.innerHTML = `<div class="text-center text-xs text-gray-500 py-8">Der Bot ist auf keinem Server.</div>`;
+                let res = await fetch('/api/bot-servers?userid=' + OWNER_ID);
+                let data = await res.json();
+                if(data.error) {
+                    document.getElementById('serverList').innerHTML = data.error;
                     return;
                 }
-
-                let html = "";
-                servers.forEach(srv => {
-                    html += `
-                        <div class="bg-[#181822] border border-[#262635] p-3.5 rounded-xl flex items-center justify-between hover:border-blue-500/50 transition">
-                            <div>
-                                <div class="font-bold text-sm text-white">${srv.name}</div>
-                                <div class="text-[10px] text-gray-400 mt-0.5">Mitglieder: ${srv.memberCount} | ID: ${srv.id}</div>
-                            </div>
-                            <button onclick="selectServer('${srv.id}', '${srv.name}')" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg transition cursor-pointer shadow-md">
-                                Wählen ➔
-                            </button>
-                        </div>
-                    `;
+                let html = '';
+                data.forEach(s => {
+                    html += `<div class="p-3 bg-[#181822] rounded-xl flex justify-between items-center text-xs"><span>${s.name}</span><span class="text-blue-400">${s.memberCount} Mitglieder</span></div>`;
                 });
-                container.innerHTML = html;
-            } catch (error) {
-                container.innerHTML = `<div class="text-center text-xs text-red-400 py-8">API nicht erreichbar. Prüfe die URL unten in der Sidebar.</div>`;
-            }
-        }
-
-        function selectServer(id, name) {
-            selectedServerId = id;
-            document.getElementById('activeServerName').innerText = `${name} (ID: ${id})`;
-            closeServerModal();
-        }
-
-        async function updateBotStatus() {
-            const baseUrl = document.getElementById('apiUrlInput').value.trim();
-            const type = document.getElementById('statusType').value;
-            const text = document.getElementById('statusText').value;
-
-            try {
-                const res = await fetch(`${baseUrl}/api/admin/status`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type, text })
-                });
-                const result = await res.json();
-                alert(result.success ? 'Erfolg! Bot-Status wurde aktualisiert.' : 'Fehler: ' + result.error);
+                document.getElementById('serverList').innerHTML = html || 'Keine Server gefunden.';
             } catch(e) {
-                alert('API-Verbindung fehlgeschlagen.');
+                document.getElementById('serverList').innerHTML = 'Fehler beim Laden der API.';
             }
         }
-
-        async function sendVerification() {
-            if(!selectedServerId) { alert('Bitte wähle zuerst oben einen Server aus!'); openServerModal(); return; }
-            const baseUrl = document.getElementById('apiUrlInput').value.trim();
-            const channel = document.getElementById('verifyChannel').value;
-            const role = document.getElementById('verifyRole').value;
-
-            try {
-                const res = await fetch(`${baseUrl}/api/guilds/${selectedServerId}/verify`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ channel, role })
-                });
-                const result = await res.json();
-                alert(result.success ? 'Erfolg! Verifizierungs-Panel gesendet.' : 'Fehler: ' + result.error);
-            } catch(e) {
-                alert('API-Verbindung fehlgeschlagen.');
-            }
-        }
-
-        async function triggerLockdown(action) {
-            if(!selectedServerId) { alert('Bitte wähle zuerst oben einen Server aus!'); openServerModal(); return; }
-            const baseUrl = document.getElementById('apiUrlInput').value.trim();
-
-            if(!confirm(action === 'lock' ? 'Möchtest du wirklich den gesamten Server sperren?' : 'Server wieder entsperren?')) return;
-
-            try {
-                const res = await fetch(`${baseUrl}/api/guilds/${selectedServerId}/lockdown`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action })
-                });
-                const result = await res.json();
-                alert(result.success ? result.message : 'Fehler: ' + result.error);
-            } catch(e) {
-                alert('API-Verbindung fehlgeschlagen.');
-            }
-        }
-
-        window.onload = () => {
-            fetchBotServers().catch(() => {});
-        };
+        init();
     </script>
 </body>
-</html>
+</html>"""
+
+async def serve_dashboard(request):
+    return web.Response(text=HTML_DASHBOARD, content_type='text/html')
+
+async def api_get_bot_servers(request):
+    user_id = request.query.get("userid")
+    if user_id != OWNER_ID:
+        return web.json_response({"error": "Zugriff verweigert. Keine Administrator-Rechte."}, status=403)
+        
+    servers_data = [{"id": str(g.id), "name": g.name, "memberCount": g.member_count} for g in bot.guilds]
+    return web.json_response(servers_data)
+
+async def start_web_server():
+    app = web.Application()
+    app.router.add_get('/', serve_dashboard)
+    app.router.add_get('/api/bot-servers', api_get_bot_servers)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, '0.0.0.0', 8080)
+    await site.start()
+    print("Webserver läuft auf http://localhost:8080")
+
+@bot.event
+async def on_ready():
+    print(f'Eingeloggt als {bot.user.name}')
+    bot.loop.create_task(start_web_server())
+
+TOKEN = os.getenv("DISCORD_TOKEN")
+if TOKEN:
+    bot.run(TOKEN)
+else:
+    print("Fehler: Es wurde keine Umgebungsvariable 'DISCORD_TOKEN' gefunden!")
