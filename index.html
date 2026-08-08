@@ -2,7 +2,6 @@ import discord
 from discord.ext import commands
 from discord import ui
 from aiohttp import web
-import os
 
 intents = discord.Intents.default()
 intents.guilds = True
@@ -13,7 +12,7 @@ intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # =========================================================
-#  HTML DASHBOARD CODE (DIREKT INTEGRIERT - KEINE API PROBLEME)
+#  HTML DASHBOARD CODE
 # =========================================================
 HTML_DASHBOARD = """<!DOCTYPE html>
 <html lang="de" class="dark">
@@ -96,7 +95,6 @@ HTML_DASHBOARD = """<!DOCTYPE html>
     <div id="overlay" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[50] hidden"></div>
 
     <main class="px-6 py-10 max-w-3xl mx-auto flex-grow w-full space-y-6">
-        
         <div class="bg-[#111116] border border-[#1f1f28] p-6 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
                 <span class="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">Aktiver Server</span>
@@ -201,7 +199,6 @@ HTML_DASHBOARD = """<!DOCTYPE html>
                 </button>
             </div>
         </div>
-
     </main>
 
     <section id="server-modal" class="fixed inset-0 z-[80] flex items-center justify-center p-4 hidden bg-black/80 backdrop-blur-md">
@@ -476,5 +473,4 @@ async def on_ready():
     print(f'Eingeloggt als Bot: {bot.user.name}')
     bot.loop.create_task(start_web_server())
 
-# Trage hier deinen Bot Token ein:
-bot.run("MTUzNDY3NzE2MDg3MzI5NjA2NA.GQOB5q.yOCEf8qLndjPRKKteiZZzjyXh6vwFelTO06wsk")
+bot.run("DEIN_BOT_TOKEN")
