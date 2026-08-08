@@ -9,7 +9,6 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #070709; color: #f3f4f6; }
         
-        /* Neon Glow & Active States for Sidebar */
         .nav-btn {
             background-color: #111116;
             color: #9ca3af;
@@ -17,22 +16,21 @@
             transition: all 0.25s ease-in-out;
         }
         .nav-btn:hover {
-            background-color: #181820;
+            background-color: #16161c;
             color: #ffffff;
             border-color: #3b82f6;
         }
         .nav-btn.active {
-            background: linear-gradient(90deg, rgba(59, 130, 246, 0.15) 0%, rgba(17, 17, 22, 0) 100%);
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.12) 0%, rgba(17, 17, 22, 0) 100%);
             color: #60a5fa;
             border-left: 4px solid #3b82f6;
             border-color: rgba(59, 130, 246, 0.4);
-            box-shadow: inset 4px 0 12px -2px rgba(59, 130, 246, 0.3), 0 0 15px rgba(59, 130, 246, 0.15);
+            box-shadow: inset 4px 0 12px -2px rgba(59, 130, 246, 0.25), 0 0 15px rgba(59, 130, 246, 0.1);
         }
     </style>
 </head>
 <body class="flex flex-col min-h-screen justify-between selection:bg-blue-500 selection:text-white">
 
-    <!-- Top Navbar -->
     <nav class="sticky top-0 z-50 bg-[#070709]/90 backdrop-blur-xl border-b border-[#1f1f28]">
         <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-4">
@@ -41,26 +39,22 @@
                 </button>
                 <div class="flex items-center space-x-2">
                     <div class="w-3 h-3 rounded-full bg-blue-500 animate-pulse"></div>
-                    <span class="font-extrabold tracking-wider text-sm bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">PHANTOM // CORE</span>
+                    <span class="font-extrabold tracking-wider text-sm text-white">PHANTOM // ADMIN PANEL</span>
                 </div>
             </div>
             <div class="flex items-center space-x-3">
-                <span class="text-[10px] font-extrabold px-3 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full tracking-wider shadow-inner">SYSTEM ONLINE</span>
+                <span class="text-[10px] font-extrabold px-3 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full tracking-wider">SYSTEM ONLINE</span>
             </div>
         </div>
     </nav>
 
-    <!-- Sidebar mit Neon-Effekt -->
     <div id="sidebar" class="fixed top-0 left-0 h-full w-80 bg-[#0d0d12] border-r border-[#1f1f28] z-[60] transform -translate-x-full transition-transform duration-300 p-6 flex flex-col justify-between shadow-2xl">
         <div>
             <div class="flex justify-between items-center mb-8">
-                <div class="flex items-center space-x-2">
-                    <span class="text-xs font-black tracking-widest uppercase text-blue-400">Navigation</span>
-                </div>
-                <button id="closeBtn" class="w-8 h-8 rounded-lg bg-[#16161f] flex items-center justify-center text-gray-400 hover:text-white hover:bg-red-500/20 transition cursor-pointer">✕</button>
+                <span class="text-xs font-black tracking-widest uppercase text-blue-400">Navigation</span>
+                <button id="closeBtn" class="w-8 h-8 rounded-lg bg-[#16161f] flex items-center justify-center text-gray-400 hover:text-white cursor-pointer">✕</button>
             </div>
             
-            <!-- Die Sidebar Buttons mit deinem gewünschten Schwarz/Blauer Strahl-System -->
             <div class="space-y-2.5 text-xs font-semibold" id="navMenu">
                 <button onclick="switchSection('overview', this)" class="nav-btn active w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left cursor-pointer">
                     <span class="text-base">🎛️</span>
@@ -69,10 +63,6 @@
                 <button onclick="switchSection('verification', this)" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left cursor-pointer">
                     <span class="text-base">🛡️</span>
                     <span>Verifizierung & Security</span>
-                </button>
-                <button onclick="switchSection('broadcast', this)" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left cursor-pointer">
-                    <span class="text-base">📢</span>
-                    <span>Blitz-Ankündigungen</span>
                 </button>
                 <button onclick="switchSection('botstatus', this)" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left cursor-pointer">
                     <span class="text-base">🤖</span>
@@ -85,8 +75,8 @@
             </div>
 
             <div class="mt-8 pt-6 border-t border-[#1f1f28]">
-                <div class="text-[10px] text-gray-500 mb-2 uppercase font-extrabold tracking-widest">API Endpoint Gateway</div>
-                <input type="text" id="apiUrlInput" value="http://localhost:8080" class="w-full bg-[#070709] border border-[#22222d] rounded-xl px-3 py-2 text-xs text-blue-400 focus:outline-none focus:border-blue-500 font-mono shadow-inner">
+                <div class="text-[10px] text-gray-500 mb-2 uppercase font-extrabold tracking-widest">API Gateway URL</div>
+                <input type="text" id="apiUrlInput" value="http://localhost:8080" class="w-full bg-[#070709] border border-[#22222d] rounded-xl px-3 py-2 text-xs text-blue-400 focus:outline-none focus:border-blue-500 font-mono">
             </div>
         </div>
         <div class="text-[10px] text-gray-600 text-center border-t border-[#1f1f28] pt-4 font-mono">Owner ID: 1523728380476919910</div>
@@ -94,78 +84,70 @@
 
     <div id="overlay" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[50] hidden"></div>
 
-    <!-- MAIN DASHBOARD CONTENT -->
     <main class="px-6 py-10 max-w-3xl mx-auto flex-grow w-full space-y-6">
         
-        <!-- Server Select Banner -->
-        <div class="bg-[#111116] border border-[#1f1f28] p-6 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden">
-            <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-blue-500/5 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="bg-[#111116] border border-[#1f1f28] p-6 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-                <div class="flex items-center space-x-2">
-                    <span class="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">Ziel-Server</span>
-                </div>
+                <span class="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">Aktiver Server</span>
                 <h1 id="activeServerName" class="text-lg font-bold text-white mt-2">Kein Server ausgewählt</h1>
-                <p class="text-xs text-gray-400 mt-0.5">Wähle einen Discord-Server aus, um Befehle direkt über die API auszuführen.</p>
+                <p class="text-xs text-gray-400 mt-0.5">Wähle deinen Discord-Server aus, um Befehle direkt auszuführen.</p>
             </div>
             <button onclick="openServerModal()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-5 py-3 rounded-xl transition cursor-pointer shadow-lg shadow-blue-600/20 flex items-center space-x-2">
-                <span>Server wechseln</span>
+                <span>Server wählen</span>
                 <span>➔</span>
             </button>
         </div>
 
-        <!-- SEKTION 1: Admin Steuerzentrale (Overview) -->
         <div id="sec-overview" class="admin-section space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="bg-[#111116] border border-[#1f1f28] p-5 rounded-2xl">
                     <div class="text-gray-400 text-[10px] font-bold uppercase">Verbundene Server</div>
                     <div id="statGuilds" class="text-2xl font-extrabold text-white mt-1">--</div>
-                    <div class="text-[10px] text-blue-400 mt-2">Live API Synchronisiert</div>
+                    <div class="text-[10px] text-blue-400 mt-2">Live verbunden</div>
                 </div>
                 <div class="bg-[#111116] border border-[#1f1f28] p-5 rounded-2xl">
-                    <div class="text-gray-400 text-[10px] font-bold uppercase">Sicherheits-Modus</div>
-                    <div class="text-2xl font-extrabold text-green-400 mt-1">Aktiv</div>
-                    <div class="text-[10px] text-gray-500 mt-2">Firewall & Lockdown bereit</div>
+                    <div class="text-gray-400 text-[10px] font-bold uppercase">Sicherheits-Status</div>
+                    <div class="text-2xl font-extrabold text-green-400 mt-1">Optimal</div>
+                    <div class="text-[10px] text-gray-500 mt-2">Firewall aktiv</div>
                 </div>
                 <div class="bg-[#111116] border border-[#1f1f28] p-5 rounded-2xl">
-                    <div class="text-gray-400 text-[10px] font-bold uppercase">System Latenz</div>
-                    <div class="text-2xl font-extrabold text-blue-400 mt-1">&lt; 15ms</div>
-                    <div class="text-[10px] text-blue-400/80 mt-2">High-Speed WebSocket</div>
+                    <div class="text-gray-400 text-[10px] font-bold uppercase">API Ping</div>
+                    <div class="text-2xl font-extrabold text-blue-400 mt-1">&lt; 10ms</div>
+                    <div class="text-[10px] text-blue-400/80 mt-2">High-Speed</div>
                 </div>
             </div>
 
-            <!-- Notfall Lockdown Card -->
             <div class="bg-[#111116] border border-red-500/20 p-6 rounded-2xl shadow-xl space-y-4">
                 <div class="flex items-center space-x-3">
                     <div class="w-8 h-8 rounded-xl bg-red-500/10 flex items-center justify-center text-red-400 font-bold">🚨</div>
                     <div>
-                        <h3 class="text-sm font-extrabold text-red-400 uppercase tracking-wide">Notfall-Sicherheits-Lockdown</h3>
-                        <p class="text-xs text-gray-400">Sperrt alle Textkanäle des ausgewählten Servers in Sekundenschnelle.</p>
+                        <h3 class="text-sm font-extrabold text-red-400 uppercase tracking-wide">Notfall-Server-Lockdown</h3>
+                        <p class="text-xs text-gray-400">Sperrt alle Textkanäle des gewählten Servers für Mitglieder.</p>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-3 pt-2">
-                    <button onclick="triggerLockdown('lock')" class="bg-red-600 hover:bg-red-500 text-white text-xs font-bold py-3 rounded-xl transition cursor-pointer shadow-lg shadow-red-600/20">
-                        🔒 Server Komplett Sperren
+                    <button onclick="triggerLockdown('lock')" class="bg-red-600 hover:bg-red-500 text-white text-xs font-bold py-3 rounded-xl transition cursor-pointer shadow-lg">
+                        🔒 Server Sperren
                     </button>
                     <button onclick="triggerLockdown('unlock')" class="bg-[#181822] hover:bg-[#22222f] text-gray-300 text-xs font-bold py-3 rounded-xl transition border border-[#262635] cursor-pointer">
-                        🔓 Lockdown Aufheben
+                        🔓 Entsperren
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- SEKTION 2: Verifizierung -->
         <div id="sec-verification" class="admin-section space-y-6 hidden">
             <div class="bg-[#111116] border border-[#1f1f28] p-6 rounded-2xl shadow-xl space-y-4">
                 <div class="flex items-center space-x-3">
                     <div class="w-8 h-8 rounded-xl bg-green-500/10 flex items-center justify-center text-green-400 font-bold">🛡️</div>
                     <div>
-                        <h3 class="text-sm font-extrabold text-green-400 uppercase tracking-wide">Verifizierungs-Panel Generator</h3>
-                        <p class="text-xs text-gray-400">Postet ein interaktives Button-Panel, das neue User automatisch freischaltet.</p>
+                        <h3 class="text-sm font-extrabold text-green-400 uppercase tracking-wide">Verifizierungs-System</h3>
+                        <p class="text-xs text-gray-400">Sendet ein interaktives Button-Panel in den angegebenen Kanal.</p>
                     </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                     <div>
-                        <label class="block text-[10px] text-gray-400 mb-1 font-bold uppercase">Ziel-Kanal Name</label>
+                        <label class="block text-[10px] text-gray-400 mb-1 font-bold uppercase">Kanal Name</label>
                         <input type="text" id="verifyChannel" value="verifizierung" class="w-full bg-[#070709] border border-[#22222d] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-green-500">
                     </div>
                     <div>
@@ -173,51 +155,24 @@
                         <input type="text" id="verifyRole" value="Mitglied" class="w-full bg-[#070709] border border-[#22222d] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-green-500">
                     </div>
                 </div>
-                <button onclick="sendVerification()" class="w-full bg-green-600 hover:bg-green-500 text-white text-xs font-bold py-3 rounded-xl transition shadow-lg shadow-green-600/20 cursor-pointer">
-                    ✨ Interaktives Panel nach Discord Senden
+                <button onclick="sendVerification()" class="w-full bg-green-600 hover:bg-green-500 text-white text-xs font-bold py-3 rounded-xl transition shadow-lg cursor-pointer">
+                    ✨ Verifizierungs-Panel Senden
                 </button>
             </div>
         </div>
 
-        <!-- SEKTION 3: Blitz-Ankündigungen (Idee) -->
-        <div id="sec-broadcast" class="admin-section space-y-6 hidden">
-            <div class="bg-[#111116] border border-[#1f1f28] p-6 rounded-2xl shadow-xl space-y-4">
-                <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 font-bold">📢</div>
-                    <div>
-                        <h3 class="text-sm font-extrabold text-purple-400 uppercase tracking-wide">Blitz-Ankündigungs System</h3>
-                        <p class="text-xs text-gray-400">Sende schicke Embed-Nachrichten direkt über das Dashboard in den Announcement-Kanal.</p>
-                    </div>
-                </div>
-                <div class="space-y-3 pt-2">
-                    <div>
-                        <label class="block text-[10px] text-gray-400 mb-1 font-bold uppercase">Nachrichten Titel</label>
-                        <input type="text" id="broadcastTitle" placeholder="Wichtige Server Update!" class="w-full bg-[#070709] border border-[#22222d] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-purple-500">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] text-gray-400 mb-1 font-bold uppercase">Nachrichten Inhalt (Text)</label>
-                        <textarea id="broadcastContent" rows="3" placeholder="Hier steht der Text der Ankündigung..." class="w-full bg-[#070709] border border-[#22222d] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-purple-500"></textarea>
-                    </div>
-                </div>
-                <button onclick="alert('Ankündigungs-Modul bereit!')" class="w-full bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold py-3 rounded-xl transition shadow-lg shadow-purple-600/20 cursor-pointer">
-                    🚀 Als Embed Ankündigen
-                </button>
-            </div>
-        </div>
-
-        <!-- SEKTION 4: Bot Status -->
         <div id="sec-botstatus" class="admin-section space-y-6 hidden">
             <div class="bg-[#111116] border border-[#1f1f28] p-6 rounded-2xl shadow-xl space-y-4">
                 <div class="flex items-center space-x-3">
                     <div class="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 font-bold">🤖</div>
                     <div>
-                        <h3 class="text-sm font-extrabold text-blue-400 uppercase tracking-wide">Live Bot Aktivitäts-Manager</h3>
-                        <p class="text-xs text-gray-400">Ändere in Echtzeit, was der Bot gerade auf Discord spielt oder streamt.</p>
+                        <h3 class="text-sm font-extrabold text-blue-400 uppercase tracking-wide">Bot Aktivitäts-Manager</h3>
+                        <p class="text-xs text-gray-400">Ändere live, was der Bot auf Discord anzeigt.</p>
                     </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                     <div>
-                        <label class="block text-[10px] text-gray-400 mb-1 font-bold uppercase">Aktivitäts-Modus</label>
+                        <label class="block text-[10px] text-gray-400 mb-1 font-bold uppercase">Aktivität</label>
                         <select id="statusType" class="w-full bg-[#070709] border border-[#22222d] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
                             <option value="playing">Spielt</option>
                             <option value="streaming">Streamt</option>
@@ -226,19 +181,18 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-[10px] text-gray-400 mb-1 font-bold uppercase">Status Anzeigetext</label>
+                        <label class="block text-[10px] text-gray-400 mb-1 font-bold uppercase">Text</label>
                         <input type="text" id="statusText" value="Phantom Core v2.0" class="w-full bg-[#070709] border border-[#22222d] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
                     </div>
                 </div>
-                <button onclick="updateBotStatus()" class="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-3 rounded-xl transition shadow-lg shadow-blue-600/20 cursor-pointer">
-                    ✨ Bot Status Sofort Aktualisieren
+                <button onclick="updateBotStatus()" class="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-3 rounded-xl transition shadow-lg cursor-pointer">
+                    ✨ Bot Status Aktualisieren
                 </button>
             </div>
         </div>
 
     </main>
 
-    <!-- Modal: Server Auswahl -->
     <section id="server-modal" class="fixed inset-0 z-[80] flex items-center justify-center p-4 hidden bg-black/80 backdrop-blur-md">
         <div class="bg-[#111116] border border-[#22222d] p-6 rounded-2xl w-full max-w-md shadow-2xl max-h-[85vh] flex flex-col">
             <div class="flex justify-between items-center mb-4">
@@ -246,14 +200,14 @@
                 <button onclick="closeServerModal()" class="w-7 h-7 rounded-lg bg-[#181822] flex items-center justify-center text-gray-400 hover:text-white cursor-pointer">✕</button>
             </div>
             <div id="serverListContainer" class="space-y-3 overflow-y-auto flex-grow pr-1">
-                <div class="text-center text-xs text-gray-500 py-8">Lade Bot-Server von der API...</div>
+                <div class="text-center text-xs text-gray-500 py-8">Lade Server...</div>
             </div>
-            <button onclick="fetchBotServers()" class="w-full mt-4 bg-[#181822] hover:bg-[#22222f] text-gray-300 text-xs font-bold py-3 rounded-xl transition border border-[#262635] cursor-pointer">🔄 Server Liste Aktualisieren</button>
+            <button onclick="fetchBotServers()" class="w-full mt-4 bg-[#181822] hover:bg-[#22222f] text-gray-300 text-xs font-bold py-3 rounded-xl transition border border-[#262635] cursor-pointer">🔄 Liste Aktualisieren</button>
         </div>
     </section>
     
     <footer class="border-t border-[#1f1f28] py-6 text-center text-xs text-gray-600 bg-[#070709]">
-        Phantom Admin Command Center &copy; 2026
+        Phantom Admin Center &copy; 2026
     </footer>
 
     <script>
@@ -266,14 +220,11 @@
         document.getElementById('closeBtn').onclick = () => { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); };
         overlay.onclick = () => { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); };
 
-        // Sektionen umschalten + Aktiven Button mit blauem Strahl markieren
         function switchSection(sectionId, btnElement) {
             document.querySelectorAll('.admin-section').forEach(sec => sec.classList.add('hidden'));
             document.getElementById(`sec-${sectionId}`).classList.remove('hidden');
 
-            // Alle Sidebar Buttons zurücksetzen
             document.querySelectorAll('#navMenu .nav-btn').forEach(b => b.classList.remove('active'));
-            // Geklickten Button aktivieren (bekommt den blauen Strahl)
             if(btnElement) btnElement.classList.add('active');
 
             sidebar.classList.add('-translate-x-full');
@@ -381,7 +332,6 @@
             }
         }
 
-        // Beim Start einmal Server-Anzahl abrufen
         window.onload = () => {
             fetchBotServers().catch(() => {});
         };
