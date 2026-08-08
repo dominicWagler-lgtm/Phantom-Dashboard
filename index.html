@@ -54,7 +54,7 @@
             <h2 class="text-sm font-bold text-red-400 mb-4 uppercase">Admin Management</h2>
             <p class="text-xs text-gray-400 mb-4">Willkommen im Owner-Bereich. Du hast die volle Kontrolle.</p>
             
-            <!-- Neuer Button für das Bot-Server Live-Menü -->
+            <!-- Button für Live Bot Server -->
             <button id="openServerListBtn" class="w-full mb-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs py-3 rounded-xl transition-all shadow-lg">
                 🌐 Live Bot-Server Übersicht
             </button>
@@ -63,25 +63,25 @@
         </div>
     </section>
 
-    <!-- NEUES EXTRA MENÜ: Live Bot Server Viewer & Joiner -->
+    <!-- EXTRA MENÜ: Live Echte Bot Server -->
     <section id="bot-servers-modal" class="fixed inset-0 z-[80] flex items-center justify-center p-4 hidden bg-black/80 backdrop-blur-sm">
         <div class="bg-[#121216] border border-blue-500/40 p-6 rounded-2xl w-full max-w-lg shadow-2xl max-h-[85vh] flex flex-col">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-sm font-bold text-blue-400 uppercase">Live Bot Server (Echtzeit)</h2>
+                <h2 class="text-sm font-bold text-blue-400 uppercase">Echte Bot-Server (Live API)</h2>
                 <button onclick="document.getElementById('bot-servers-modal').classList.add('hidden')" class="text-gray-400 hover:text-white text-lg font-bold">✕</button>
             </div>
-            <p class="text-xs text-gray-400 mb-4">Hier siehst du live, auf welchen Servern sich dein Bot aktuell befindet, und kannst direkt beitreten:</p>
+            <p class="text-xs text-gray-400 mb-4">Hier werden die echten Server geladen, auf denen dein Bot aktiv ist:</p>
             
             <!-- Server Liste Container -->
             <div id="serverListContainer" class="space-y-3 overflow-y-auto flex-grow pr-1">
-                <div class="text-center text-xs text-gray-500 py-6">Lade Server-Daten...</div>
+                <div class="text-center text-xs text-gray-500 py-6">Verbinde mit Bot-API...</div>
             </div>
 
             <button onclick="document.getElementById('bot-servers-modal').classList.add('hidden')" class="w-full mt-4 bg-[#22222a] text-gray-300 text-xs py-2.5 rounded-xl">Schließen</button>
         </div>
     </section>
 
-    <!-- Main Content (Dein Text exakt beibehalten) -->
+    <!-- Main Content (Exakt wie im Screenshot) -->
     <main class="px-6 pt-12 max-w-md mx-auto flex-grow w-full">
         <h1 class="text-3xl font-extrabold mb-6">Phantom Dashboard</h1>
         <div class="bg-[#121216] border border-[#22222a] p-5 rounded-2xl">
@@ -94,7 +94,7 @@
         Phantom Bot System &copy; 2026
     </footer>
 
-    <!-- Script für Sidebar, Admin Panel & Live Bot Server -->
+    <!-- Script -->
     <script>
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('overlay');
@@ -114,43 +114,52 @@
             };
         }
 
-        // Öffnet das Live Server Menü und simuliert/lädt die Serverliste
         document.getElementById('openServerListBtn').onclick = () => {
             adminPanel.classList.add('hidden');
             botServersModal.classList.remove('hidden');
-            loadBotServers();
+            fetchRealBotServers();
         };
 
-        function loadBotServers() {
+        // Funktion für echte Server-Daten von deiner Bot-API
+        async function fetchRealBotServers() {
             const container = document.getElementById('serverListContainer');
-            
-            // Beispiel-Daten (Hier greift der Bot normalerweise auf die API zu)
-            // Du kannst hier deine echten Server eintragen oder über einen Bot-Endpunkt abrufen.
-            const servers = [
-                { name: "Phantom Community & Support", members: "1,240", id: "1234567890", invite: "https://discord.gg/example1" },
-                { name: "Dominic's Lounge", members: "85", id: "0987654321", invite: "https://discord.gg/example2" }
-            ];
+            container.innerHTML = `<div class="text-center text-xs text-gray-400 py-6">Lade echte Server von der Bot-Schnittstelle...</div>`;
 
-            if (servers.length === 0) {
-                container.innerHTML = `<div class="text-center text-xs text-gray-500 py-6">Der Bot ist aktuell auf keinem Server.</div>`;
-                return;
-            }
+            try {
+                // Ersetze diese URL mit der echten URL deiner Bot-API / Backend-Route (z.B. von deinem Bot-Host)
+                const response = await fetch('https://deine-bot-api-domain.com/api/bot-servers');
+                const servers = await response.json();
 
-            let html = "";
-            servers.forEach(srv => {
-                html += `
-                    <div class="bg-[#1a1a22] border border-[#333] p-3.5 rounded-xl flex items-center justify-between">
-                        <div>
-                            <div class="font-bold text-sm text-white">${srv.name}</div>
-                            <div class="text-[10px] text-gray-400 mt-0.5">Mitglieder: ${srv.members} | ID: ${srv.id}</div>
+                if (!servers || servers.length === 0) {
+                    container.innerHTML = `<div class="text-center text-xs text-gray-500 py-6">Der Bot befindet sich aktuell auf keinem Server oder die API ist offline.</div>`;
+                    return;
+                }
+
+                let html = "";
+                servers.forEach(srv => {
+                    html += `
+                        <div class="bg-[#1a1a22] border border-[#333] p-3.5 rounded-xl flex items-center justify-between">
+                            <div>
+                                <div class="font-bold text-sm text-white">${srv.name}</div>
+                                <div class="text-[10px] text-gray-400 mt-0.5">Mitglieder: ${srv.memberCount} | ID: ${srv.id}</div>
+                            </div>
+                            <a href="${srv.inviteLink}" target="_blank" class="bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-all shadow">
+                                Beitreten
+                            </a>
                         </div>
-                        <a href="${srv.invite}" target="_blank" class="bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-all shadow">
-                            Beitreten
-                        </a>
+                    `;
+                });
+                container.innerHTML = html;
+
+            } catch (error) {
+                // Falls die API noch nicht läuft oder erreichbar ist, zeigt es diesen Fehlerhinweis
+                container.innerHTML = `
+                    <div class="text-center text-xs text-red-400 py-4">
+                        Keine Verbindung zur Bot-API möglich.<br>
+                        <span class="text-[10px] text-gray-500">Stelle sicher, dass dein Bot die Server-Route bereitstellt.</span>
                     </div>
                 `;
-            });
-            container.innerHTML = html;
+            }
         }
     </script>
 </body>
