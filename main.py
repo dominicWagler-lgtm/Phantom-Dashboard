@@ -1,12 +1,16 @@
 import os
 import threading
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 import uvicorn
 
 app = FastAPI()
+
+# Globale Variablen für den Bot-Status
+bot_ping_ms = 0
+bot_status_text = "Offline"
 
 HTML_CONTENT = """
 <!DOCTYPE html>
@@ -27,7 +31,7 @@ HTML_CONTENT = """
             width: 100vw;
             overflow-x: hidden;
         }
-        /* Feste obere Leiste (App-Header) */
+        /* Feste obere Leiste */
         .top-bar {
             position: fixed;
             top: 0;
@@ -56,7 +60,7 @@ HTML_CONTENT = """
             font-size: 18px;
             font-weight: bold;
         }
-        /* Seitenleiste klappt unter der Top-Leiste aus */
+        /* Seitenleiste */
         .sidebar {
             width: 250px;
             background-color: #1e293b;
@@ -107,20 +111,34 @@ HTML_CONTENT = """
             border-radius: 16px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
             text-align: center;
-            max-width: 300px;
+            max-width: 320px;
             width: 90%;
         }
-        h1 { color: #38bdf8; margin-bottom: 10px; font-size: 22px; }
-        p { color: #94a3b8; font-size: 15px; }
+        h1 { color: #38bdf8; margin-bottom: 5px; font-size: 22px; }
+        p { color: #94a3b8; font-size: 14px; margin-bottom: 20px; }
+        .info-box {
+            background-color: #0f172a;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #94a3b8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .ping-value {
+            color: #38bdf8;
+            font-weight: bold;
+        }
         .status {
             display: inline-block;
-            background-color: #22c55e;
+            background-color: #ef4444;
             color: white;
-            padding: 6px 12px;
+            padding: 6px 16px;
             border-radius: 20px;
             font-size: 14px;
             font-weight: bold;
-            margin-top: 20px;
         }
     </style>
 </head>
@@ -141,9 +159,15 @@ HTML_CONTENT = """
     <!-- Hauptbereich -->
     <div class="main-content">
         <div class="card">
-            <h1>Phantom Dashboard</h1>
-            <p>Dein Dashboard läuft stabil!</p>
-            <div class="status">● Online</div>
+            <h1>Phantom Bot</h1>
+            <p>Live-Überwachung</p>
+            
+            <div class="info-box">
+                <span>Bot Latenz (Ping):</span>
+                <span id="ping" class="ping-value">Lade...</span>
+            </div>
+
+            <div id="status-badge" class="status">● Offline</div>
         </div>
     </div>
 
@@ -151,6 +175,32 @@ HTML_CONTENT = """
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('open');
         }
+
+        // Live-Daten alle 3 Sekunden von FastAPI abrufen
+        async function updateStatus() {
+            try {
+                let response = await fetch('/api/status');
+                let data = await response.json();
+                
+                const badge = document.getElementById('status-badge');
+                const pingEl = document.getElementById('ping');
+
+                if (data.status === "Online") {
+                    badge.innerText = "● Online";
+                    badge.style.backgroundColor = "#22c55e";
+                    pingEl.innerText = data.ping + " ms";
+                } else {
+                    badge.innerText = "● Offline";
+                    badge.style.backgroundColor = "#ef4444";
+                    pingEl.innerText = "-";
+                }
+            } catch (err) {
+                console.error("Fehler beim Abrufen des Status");
+            }
+        }
+
+        setInterval(updateStatus, 3000);
+        updateStatus();
     </script>
 </body>
 </html>
@@ -160,14 +210,38 @@ HTML_CONTENT = """
 def home():
     return HTML_CONTENT
 
+@app.get("/api/status")
+def api_status():
+    return {"status": bot_status_text, "ping": bot_ping_ms}
+
 def run_server():
     port = int(os.environ.get("PORT", 8080))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
+# Discord Bot Setup
+intents = discord.Intents.default()
+intents.guilds = True
+intents.members = True
+bot = commands.Bot(command_prefix="/", intents=intents)
+
+@tasks.loop(seconds=3)
+async def status_loop():
+    global bot_ping_ms, bot_status_text
+    if bot.is_ready():
+        bot_ping_ms = round(bot.latency * 1000)
+        bot_status_text = "Online"
+    else:
+        bot_status_text = "Offline"
+
+@bot.event
+async def on_ready():
+    print(f'Eingeloggt als {bot.user}')
+    if not status_loop.is_running():
+        status_loop.start()
 
 if __name__ == "__main__":
     t = threading.Thread(target=run_server)
     t.start()
     TOKEN = os.environ.get('DISCORD_TOKEN')
     if TOKEN:
-        bot = commands.Bot(command_prefix="/", intents=discord.Intents.default())
         bot.run(TOKEN)
