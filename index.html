@@ -1,229 +1,120 @@
+import os
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+import uvicorn
+
+# ---------- KONFIGURATION ----------
+PORT = int(os.environ.get("PORT", 8000))
+
+# ---------- FASTAPI WEB-DASHBOARD (SCNX DESIGN) ----------
+app = FastAPI()
+
+SCNX_HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>University Bot — Dashboard</title>
+    <title>SCNX — University Bot Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-[#0b0f19] text-gray-100 font-sans antialiased">
+<body class="bg-[#0b0f19] text-gray-200 font-sans antialiased">
     <div class="flex h-screen overflow-hidden">
         
         <!-- Sidebar -->
-        <aside class="w-64 bg-[#111827] border-r border-gray-800 flex flex-col justify-between hidden md:flex">
+        <aside class="w-64 bg-[#111827] border-r border-gray-800/80 flex flex-col justify-between hidden md:flex">
             <div>
-                <!-- Brand / Logo -->
-                <div class="flex items-center gap-3 px-6 py-6 border-b border-gray-800">
-                    <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-indigo-600/30">
-                        <i class="fa-solid fa-graduation-cap"></i>
+                <div class="flex items-center gap-3 px-6 py-5 border-b border-gray-800/80">
+                    <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-gray-950 font-black text-lg shadow-lg shadow-emerald-500/20">
+                        <i class="fa-solid fa-bolt"></i>
                     </div>
                     <div>
-                        <h1 class="font-bold text-base tracking-tight text-white">University Bot</h1>
-                        <span class="text-xs text-emerald-400 font-medium flex items-center gap-1.5 mt-0.5">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Online
-                        </span>
+                        <h1 class="font-bold text-base tracking-tight text-white">SCNX</h1>
+                        <p class="text-[11px] text-gray-400">University Control</p>
                     </div>
                 </div>
 
-                <!-- Navigation Links -->
-                <nav class="p-4 space-y-1.5">
-                    <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-indigo-600 text-white font-medium text-sm shadow-lg shadow-indigo-600/20 transition-all">
-                        <i class="fa-solid fa-chart-pie w-5"></i> Dashboard
+                <nav class="p-3 space-y-1">
+                    <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 font-medium text-sm border border-emerald-500/20 transition">
+                        <i class="fa-solid fa-house w-5 text-emerald-400"></i> Dashboard
                     </a>
-                    <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800/60 font-medium text-sm transition-all">
-                        <i class="fa-solid fa-shield-halved w-5"></i> Verifizierung
+                    <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800/50 font-medium text-sm transition">
+                        <i class="fa-solid fa-gear w-5 text-gray-500"></i> Settings
                     </a>
-                    <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800/60 font-medium text-sm transition-all">
-                        <i class="fa-solid fa-ticket w-5"></i> Tickets
+                    <div class="pt-4 pb-2 px-4 text-[10px] font-bold tracking-wider text-gray-500 uppercase">SCNX-Hosting</div>
+                    <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800/50 font-medium text-sm transition">
+                        <i class="fa-brands fa-discord w-5 text-indigo-400"></i> Discord-Bot
                     </a>
-                    <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800/60 font-medium text-sm transition-all">
-                        <i class="fa-solid fa-gamepad w-5"></i> Minispiele
+                    <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800/50 font-medium text-sm transition">
+                        <i class="fa-solid  fa-headset w-5 text-blue-400"></i> Support Bot
                     </a>
-                    <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800/60 font-medium text-sm transition-all">
-                        <i class="fa-solid fa-gear w-5"></i> Einstellungen
+                    <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800/50 font-medium text-sm transition">
+                        <i class="fa-solid fa-database w-5 text-yellow-400"></i> Backups
                     </a>
                 </nav>
             </div>
-
-            <!-- User Profile / Footer -->
-            <div class="p-4 border-t border-gray-800">
-                <div class="flex items-center gap-3 p-3 rounded-xl bg-gray-900/60 border border-gray-800/80">
-                    <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center font-bold text-sm">
-                        U
-                    </div>
-                    <div class="overflow-hidden flex-1">
-                        <p class="text-sm font-semibold truncate text-white">University Admin</p>
-                        <p class="text-xs text-gray-400 truncate">Server Management</p>
-                    </div>
-                </div>
+            <div class="p-4 border-t border-gray-800/80 text-xs text-gray-500 flex items-center justify-between">
+                <span>Dashboard Status: Online</span>
+                <i class="fa-solid fa-circle text-[8px] text-emerald-500 animate-pulse"></i>
             </div>
         </aside>
 
         <!-- Main Content -->
         <main class="flex-1 flex flex-col overflow-y-auto">
-            
-            <!-- Top Navbar -->
-            <header class="h-20 bg-[#111827]/80 backdrop-blur-md border-b border-gray-800 px-8 flex items-center justify-between sticky top-0 z-20">
-                <div class="flex items-center gap-4">
-                    <button class="md:hidden text-gray-400 hover:text-white text-xl">
-                        <i class="fa-solid fa-bars"></i>
-                    </button>
-                    <div>
-                        <h2 class="text-xl font-bold text-white tracking-tight">Übersicht</h2>
-                        <p class="text-xs text-gray-400">Willkommen zurück im Control Panel</p>
-                    </div>
+            <header class="h-16 bg-[#111827]/60 backdrop-blur-md border-b border-gray-800/80 px-6 flex items-center justify-between sticky top-0 z-20">
+                <div class="flex items-center gap-3">
+                    <span class="text-xs text-gray-400 font-medium">University Dashboard</span>
+                    <i class="fa-solid fa-chevron-right text-[10px] text-gray-600"></i>
+                    <span class="text-xs text-emerald-400 font-semibold">Live Panel</span>
                 </div>
-
-                <div class="flex items-center gap-4">
-                    <div class="hidden sm:flex items-center gap-2 bg-gray-900 border border-gray-800 px-3.5 py-1.5 rounded-xl text-xs font-medium text-gray-300">
-                        <i class="fa-brands fa-discord text-indigo-400 text-sm"></i>
-                        <span>University Community</span>
-                    </div>
-                    <div class="w-10 h-10 rounded-xl bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-400 hover:text-white cursor-pointer transition">
-                        <i class="fa-regular fa-bell"></i>
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white">
+                        UA
                     </div>
                 </div>
             </header>
 
-            <!-- Dashboard Body -->
-            <div class="p-8 max-w-7xl mx-auto w-full space-y-8">
-                
-                <!-- Welcome Banner -->
-                <div class="relative overflow-hidden bg-gradient-to-r from-indigo-900/40 via-purple-900/20 to-transparent border border-indigo-500/20 rounded-2xl p-8 shadow-xl">
-                    <div class="relative z-10 max-w-2xl">
-                        <span class="px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-xs font-semibold tracking-wide uppercase">System Aktiv</span>
-                        <h3 class="text-3xl font-extrabold text-white mt-3">University Bot Dashboard</h3>
-                        <p class="text-gray-300 text-sm mt-2 leading-relaxed">Verwalte alle Module, Sicherheitssysteme, automatischen Verifizierungen und Support-Kanäle deines Servers zentral von einem Ort aus.</p>
-                    </div>
-                    <div class="absolute right-6 -bottom-10 opacity-10 text-9xl pointer-events-none text-indigo-400">
-                        <i class="fa-solid fa-robot"></i>
+            <div class="p-8 max-w-7xl mx-auto w-full space-y-6">
+                <!-- Banner -->
+                <div class="bg-[#111827] border border-gray-800 rounded-2xl p-6 shadow-sm flex items-center justify-between">
+                    <div class="flex items-center gap-5">
+                        <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-700 flex items-center justify-center text-3xl shadow-lg">
+                            🌐
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-bold text-white">University Control Panel</h2>
+                            <p class="text-xs text-emerald-400 mt-1">● Webserver aktiv & betriebsbereit</p>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Stats Grid -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div class="bg-[#111827] border border-gray-800 rounded-2xl p-6 shadow-sm hover:border-gray-700 transition">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-medium text-gray-400 uppercase tracking-wider">Mitglieder</span>
-                            <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
-                                <i class="fa-solid fa-users"></i>
-                            </div>
-                        </div>
-                        <p class="text-3xl font-extrabold text-white mt-4">3,842</p>
-                        <span class="text-xs text-emerald-400 font-medium flex items-center gap-1 mt-2">
-                            <i class="fa-solid fa-arrow-up"></i> +12% diesen Monat
-                        </span>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-[#111827] border border-gray-800 rounded-2xl p-6">
+                        <p class="text-xs text-gray-400 uppercase">Modus</p>
+                        <p class="text-2xl font-bold text-white mt-2">Standalone</p>
                     </div>
-
-                    <div class="bg-[#111827] border border-gray-800 rounded-2xl p-6 shadow-sm hover:border-gray-700 transition">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-medium text-gray-400 uppercase tracking-wider">Aktive Tickets</span>
-                            <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
-                                <i class="fa-solid fa-ticket"></i>
-                            </div>
-                        </div>
-                        <p class="text-3xl font-extrabold text-white mt-4">5</p>
-                        <span class="text-xs text-gray-400 font-medium flex items-center gap-1 mt-2">
-                            Wartet auf Support
-                        </span>
+                    <div class="bg-[#111827] border border-gray-800 rounded-2xl p-6">
+                        <p class="text-xs text-gray-400 uppercase">Port</p>
+                        <p class="text-2xl font-bold text-white mt-2">{port}</p>
                     </div>
-
-                    <div class="bg-[#111827] border border-gray-800 rounded-2xl p-6 shadow-sm hover:border-gray-700 transition">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-medium text-gray-400 uppercase tracking-wider">Bot Latenz</span>
-                            <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-                                <i class="fa-solid fa-bolt"></i>
-                            </div>
-                        </div>
-                        <p class="text-3xl font-extrabold text-white mt-4">14 ms</p>
-                        <span class="text-xs text-emerald-400 font-medium flex items-center gap-1 mt-2">
-                            Hervorragend
-                        </span>
-                    </div>
-
-                    <div class="bg-[#111827] border border-gray-800 rounded-2xl p-6 shadow-sm hover:border-gray-700 transition">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-medium text-gray-400 uppercase tracking-wider">Verifizierte User</span>
-                            <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center">
-                                <i class="fa-solid fa-shield-check"></i>
-                            </div>
-                        </div>
-                        <p class="text-3xl font-extrabold text-white mt-4">2,910</p>
-                        <span class="text-xs text-emerald-400 font-medium flex items-center gap-1 mt-2">
-                            Sicherheitsgrad Hoch
-                        </span>
+                    <div class="bg-[#111827] border border-gray-800 rounded-2xl p-6">
+                        <p class="text-xs text-gray-400 uppercase">System Status</p>
+                        <p class="text-2xl font-bold text-emerald-400 mt-2">Aktiv</p>
                     </div>
                 </div>
-
-                <!-- Module Section -->
-                <div class="bg-[#111827] border border-gray-800 rounded-2xl p-6 shadow-sm">
-                    <div class="flex items-center justify-between mb-6">
-                        <div>
-                            <h3 class="text-lg font-bold text-white">Server Module & Features</h3>
-                            <p class="text-xs text-gray-400 mt-0.5">Aktiviere oder deaktiviere Kernfunktionen des Bots</p>
-                        </div>
-                        <button class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-medium transition shadow-lg shadow-indigo-600/20">
-                            Änderungen speichern
-                        </button>
-                    </div>
-
-                    <div class="space-y-4">
-                        <!-- Module Item 1 -->
-                        <div class="flex items-center justify-between p-4 rounded-xl bg-gray-900/60 border border-gray-800/80">
-                            <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 rounded-xl bg-indigo-600/10 text-indigo-400 flex items-center justify-center">
-                                    <i class="fa-solid fa-user-shield"></i>
-                                </div>
-                                <div>
-                                    <h4 class="text-sm font-semibold text-white">Sicherheits-Verifizierung</h4>
-                                    <p class="text-xs text-gray-400">Schützt den Server vor Bots durch automatisches Captcha/Buttons</p>
-                                </div>
-                            </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" checked class="sr-only peer">
-                                <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                            </label>
-                        </div>
-
-                        <!-- Module Item 2 -->
-                        <div class="flex items-center justify-between p-4 rounded-xl bg-gray-900/60 border border-gray-800/80">
-                            <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 rounded-xl bg-indigo-600/10 text-indigo-400 flex items-center justify-center">
-                                    <i class="fa-solid fa-headset"></i>
-                                </div>
-                                <div>
-                                    <h4 class="text-sm font-semibold text-white">Ticket-Support System</h4>
-                                    <p class="text-xs text-gray-400">Erlaubt Mitgliedern private Support-Kanäle per Knopfdruck zu öffnen</p>
-                                </div>
-                            </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" checked class="sr-only peer">
-                                <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                            </label>
-                        </div>
-
-                        <!-- Module Item 3 -->
-                        <div class="flex items-center justify-between p-4 rounded-xl bg-gray-900/60 border border-gray-800/80">
-                            <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 rounded-xl bg-indigo-600/10 text-indigo-400 flex items-center justify-center">
-                                    <i class="fa-solid fa-gamepad"></i>
-                                </div>
-                                <div>
-                                    <h4 class="text-sm font-semibold text-white">Minispiele & Unterhaltung</h4>
-                                    <p class="text-xs text-gray-400">Interaktive Bot-Spiele für die Community im Chat</p>
-                                </div>
-                            </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" class="sr-only peer">
-                                <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
             </div>
         </main>
     </div>
 </body>
 </html>
+"""
+
+@app.get("/", response_class=HTMLResponse)
+async def dashboard_home():
+    html = SCNX_HTML_TEMPLATE.replace("{port}", str(PORT))
+    return html
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=PORT)
