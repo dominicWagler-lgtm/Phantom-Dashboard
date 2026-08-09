@@ -10,6 +10,9 @@ bot_settings = {
     "log_channel": "#bot-logs"
 }
 
+# Speichert zugewiesene Rollen pro Server-ID
+server_roles = {}
+
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
@@ -22,13 +25,21 @@ def index():
             bot_settings["log_channel"] = request.form.get("log_channel", "#bot-logs")
             return redirect(url_for("index"))
             
-        # Bot von Server kicken (Leave Server via API)
+        # Bot von Server kicken
         elif action == "kick_bot":
             guild_id = request.form.get("guild_id")
             bot_token = os.environ.get("DISCORD_TOKEN")
             if bot_token and guild_id:
                 headers = {"Authorization": f"Bot {bot_token}"}
                 requests.delete(f"https://discord.com/api/v10/users/@me/guilds/{guild_id}", headers=headers)
+            return redirect(url_for("index"))
+
+        # Rolle direkt über das Dashboard vergeben
+        elif action == "assign_role":
+            guild_id = request.form.get("guild_id")
+            role_name = request.form.get("role_name")
+            if guild_id and role_name:
+                server_roles[guild_id] = role_name
             return redirect(url_for("index"))
 
     bot_token = os.environ.get("DISCORD_TOKEN")
@@ -70,7 +81,6 @@ def index():
                 display: flex;
                 min-height: 100vh;
             }
-            /* Ausklappbare Sidebar */
             sidebar {
                 width: 260px;
                 background-color: var(--bg-sidebar);
@@ -114,7 +124,6 @@ def index():
                 background-color: var(--accent);
                 color: white;
             }
-            /* Hauptbereich */
             .main-content {
                 flex: 1;
                 padding: 30px;
@@ -169,53 +178,65 @@ def index():
                 padding-bottom: 15px;
                 margin-bottom: 20px;
             }
-            /* Server Grid */
+            /* Kompakte Server Grid */
             .server-grid {
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-                gap: 15px;
+                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+                gap: 12px;
             }
             .server-card {
                 background: #1f2937;
                 border: 1px solid #374151;
-                padding: 16px;
-                border-radius: 12px;
+                padding: 12px;
+                border-radius: 10px;
                 display: flex;
                 flex-direction: column;
-                gap: 12px;
+                gap: 10px;
             }
             .server-header {
                 display: flex;
                 align-items: center;
-                gap: 15px;
+                gap: 12px;
             }
             .server-icon {
-                width: 45px;
-                height: 45px;
+                width: 35px;
+                height: 35px;
                 background: var(--accent);
                 border-radius: 50%;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 font-weight: bold;
-                font-size: 18px;
+                font-size: 14px;
                 overflow: hidden;
                 flex-shrink: 0;
             }
             .server-icon img { width: 100%; height: 100%; object-fit: cover; }
-            .server-info h4 { margin: 0 0 4px 0; font-size: 15px; }
-            .server-info p { margin: 0; font-size: 12px; color: var(--text-muted); }
+            .server-info h4 { margin: 0 0 2px 0; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .server-info p { margin: 0; font-size: 11px; color: var(--text-muted); }
+            
+            .role-form {
+                display: flex;
+                gap: 5px;
+            }
+            .role-input {
+                flex: 1;
+                background: #111827;
+                border: 1px solid #374151;
+                color: var(--text-main);
+                padding: 6px 8px;
+                border-radius: 6px;
+                font-size: 12px;
+            }
             .server-actions {
                 display: flex;
-                gap: 10px;
-                border-top: 1px solid #374151;
-                padding-top: 10px;
+                gap: 6px;
             }
             .btn-action {
                 flex: 1;
-                padding: 8px;
+                padding: 6px;
                 border-radius: 6px;
-                font-size: 13px;
+                font-size: 12px;
                 font-weight: 600;
                 text-align: center;
                 text-decoration: none;
@@ -226,7 +247,9 @@ def index():
             .btn-join:hover { background-color: var(--accent-hover); }
             .btn-kick { background-color: var(--danger); color: white; }
             .btn-kick:hover { background-color: var(--danger-hover); }
-            /* Formulare */
+            .btn-role { background-color: #374151; color: white; }
+            .btn-role:hover { background-color: #4b5563; }
+
             .form-group { margin-bottom: 15px; }
             .form-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; }
             .form-input {
@@ -262,31 +285,29 @@ def index():
     </head>
     <body id="body">
 
-        <!-- Sidebar Menüleiste -->
         <sidebar>
             <div class="sidebar-brand">🤖 University Bot</div>
             <ul class="nav-menu">
-                <li class="nav-item active"><a href="#">📊 Übersicht & Server</a></li>
+                <li class="nav-item active"><a href="#">📊 Server & Rollen</a></li>
                 <li class="nav-item"><a href="#settings">⚙️ Einstellungen</a></li>
             </ul>
         </sidebar>
 
-        <!-- Hauptbereich -->
         <div class="main-content">
             <div class="header-top">
                 <div class="header-left">
                     <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
                     <div>
                         <h1>Admin Dashboard</h1>
-                        <p style="margin: 4px 0 0 0; color: var(--text-muted); font-size: 13px;">Echtzeit-Verwaltung</p>
+                        <p style="margin: 4px 0 0 0; color: var(--text-muted); font-size: 13px;">Kompakte Server-Verwaltung</p>
                     </div>
                 </div>
                 <div class="badge">Live Verbunden</div>
             </div>
 
-            <!-- Live Server Sektion mit Join & Bot Entfernen -->
+            <!-- Kompakte Live-Server Sektion mit Rollen-Vergabe -->
             <div class="panel">
-                <h2>Echte Live-Server</h2>
+                <h2>Deine Live-Server</h2>
                 {% if servers %}
                     <div class="server-grid">
                         {% for server in servers %}
@@ -299,17 +320,26 @@ def index():
                                             {{ server.name[0] }}
                                         {% endif %}
                                     </div>
-                                    <div class="server-info">
-                                        <h4>{{ server.name }}</h4>
-                                        <p>ID: {{ server.id }}</p>
+                                    <div class="server-info" style="min-width: 0;">
+                                        <h4 title="{{ server.name }}">{{ server.name }}</h4>
+                                        <p>Rolle: <strong>{{ server_roles.get(server.id, 'Keine') }}</strong></p>
                                     </div>
                                 </div>
+                                
+                                <!-- Rollen direkt zuweisen -->
+                                <form method="POST" class="role-form">
+                                    <input type="hidden" name="action" value="assign_role">
+                                    <input type="hidden" name="guild_id" value="{{ server.id }}">
+                                    <input type="text" name="role_name" class="role-input" placeholder="Rollenname..." required>
+                                    <button type="submit" class="btn-action btn-role">Setzen</button>
+                                </form>
+
                                 <div class="server-actions">
-                                    <a href="https://discord.com/channels/{{ server.id }}" target="_blank" class="btn-action btn-join">Server beitreten</a>
-                                    <form method="POST" style="flex: 1; display: flex;" onsubmit="return confirm('Willst du den Bot wirklich von diesem Server entfernen?');">
+                                    <a href="https://discord.com/channels/{{ server.id }}" target="_blank" class="btn-action btn-join">Join</a>
+                                    <form method="POST" style="flex: 1; display: flex;" onsubmit="return confirm('Bot wirklich kicken?');">
                                         <input type="hidden" name="action" value="kick_bot">
                                         <input type="hidden" name="guild_id" value="{{ server.id }}">
-                                        <button type="submit" class="btn-action btn-kick" style="width: 100%;">Bot entfernen</button>
+                                        <button type="submit" class="btn-action btn-kick" style="width: 100%;">Löschen</button>
                                     </form>
                                 </div>
                             </div>
@@ -324,7 +354,7 @@ def index():
 
             <!-- Einstellungen -->
             <div class="panel" id="settings">
-                <h2>Bot-Einstellungen verwalten</h2>
+                <h2>Allgemeine Einstellungen</h2>
                 <form method="POST">
                     <input type="hidden" name="action" value="save_settings">
                     <div class="form-group">
@@ -339,7 +369,7 @@ def index():
                         <label>Log-Channel</label>
                         <input type="text" class="form-input" name="log_channel" value="{{ settings.log_channel }}">
                     </div>
-                    <button type="submit" class="btn">Änderungen speichern</button>
+                    <button type="submit" class="btn">Speichern</button>
                 </form>
             </div>
         </div>
@@ -352,7 +382,7 @@ def index():
     </body>
     </html>
     """
-    return render_template_string(html_content, servers=servers, settings=bot_settings)
+    return render_template_string(html_content, servers=servers, settings=bot_settings, server_roles=server_roles)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
