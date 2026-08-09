@@ -16,7 +16,7 @@ SCNX_HTML_TEMPLATE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SCNX — University Bot Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-[#0b0f19] text-gray-200 font-sans antialiased">
@@ -47,7 +47,7 @@ SCNX_HTML_TEMPLATE = """
                         <i class="fa-brands fa-discord w-5 text-indigo-400"></i> Discord-Bot
                     </a>
                     <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800/50 font-medium text-sm transition">
-                        <i class="fa-solid  fa-headset w-5 text-blue-400"></i> Support Bot
+                        <i class="fa-solid fa-headset w-5 text-blue-400"></i> Support Bot
                     </a>
                     <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800/50 font-medium text-sm transition">
                         <i class="fa-solid fa-database w-5 text-yellow-400"></i> Backups
@@ -113,6 +113,7 @@ SCNX_HTML_TEMPLATE = """
 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard_home():
+    # Hier ist der entscheidende Punkt, der vorher gefehlt hat:
     html = SCNX_HTML_TEMPLATE.replace("{port}", str(PORT))
     return html
 
