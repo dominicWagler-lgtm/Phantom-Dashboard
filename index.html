@@ -1,22 +1,10 @@
-import os
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
-import uvicorn
-
-# ---------- KONFIGURATION ----------
-PORT = int(os.environ.get("PORT", 8000))
-
-# ---------- FASTAPI WEB-DASHBOARD (SCNX DESIGN) ----------
-app = FastAPI()
-
-SCNX_HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SCNX — University Bot Dashboard</title>
-    <script src="https://tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-[#0b0f19] text-gray-200 font-sans antialiased">
@@ -84,7 +72,7 @@ SCNX_HTML_TEMPLATE = """
                         </div>
                         <div>
                             <h2 class="text-2xl font-bold text-white">University Control Panel</h2>
-                            <p class="text-xs text-emerald-400 mt-1">● Webserver aktiv & betriebsbereit</p>
+                            <p class="text-xs text-emerald-400 mt-1">● GitHub Pages aktiv & betriebsbereit</p>
                         </div>
                     </div>
                 </div>
@@ -93,11 +81,11 @@ SCNX_HTML_TEMPLATE = """
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="bg-[#111827] border border-gray-800 rounded-2xl p-6">
                         <p class="text-xs text-gray-400 uppercase">Modus</p>
-                        <p class="text-2xl font-bold text-white mt-2">Standalone</p>
+                        <p class="text-2xl font-bold text-white mt-2">GitHub Static</p>
                     </div>
                     <div class="bg-[#111827] border border-gray-800 rounded-2xl p-6">
-                        <p class="text-xs text-gray-400 uppercase">Port</p>
-                        <p class="text-2xl font-bold text-white mt-2">{port}</p>
+                        <p class="text-xs text-gray-400 uppercase">Hosting</p>
+                        <p class="text-2xl font-bold text-white mt-2">GitHub Pages</p>
                     </div>
                     <div class="bg-[#111827] border border-gray-800 rounded-2xl p-6">
                         <p class="text-xs text-gray-400 uppercase">System Status</p>
@@ -109,13 +97,3 @@ SCNX_HTML_TEMPLATE = """
     </div>
 </body>
 </html>
-"""
-
-@app.get("/", response_class=HTMLResponse)
-async def dashboard_home():
-    # Hier ist der entscheidende Punkt, der vorher gefehlt hat:
-    html = SCNX_HTML_TEMPLATE.replace("{port}", str(PORT))
-    return html
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=PORT)
