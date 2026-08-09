@@ -1,16 +1,24 @@
 import os
 import threading
+import urllib.parse
+import urllib.request
+import json
 import discord
 from discord.ext import commands, tasks
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
 import uvicorn
 
 app = FastAPI()
 
-# Globale Variablen für den Bot-Status
+# Globale Variablen
 bot_ping_ms = 0
 bot_status_text = "Offline"
+
+# Discord OAuth2 Konfiguration aus Railway Umgebungsvariablen
+CLIENT_ID = os.environ.get("DISCORD_CLIENT_ID", "")
+CLIENT_SECRET = os.environ.get("DISCORD_CLIENT_SECRET", "")
+REDIRECT_URI = os.environ.get("DISCORD_REDIRECT_URI", "")
 
 HTML_CONTENT = """
 <!DOCTYPE html>
@@ -31,7 +39,6 @@ HTML_CONTENT = """
             width: 100vw;
             overflow-x: hidden;
         }
-        /* Feste obere Leiste */
         .top-bar {
             position: fixed;
             top: 0;
@@ -60,7 +67,6 @@ HTML_CONTENT = """
             font-size: 18px;
             font-weight: bold;
         }
-        /* Seitenleiste */
         .sidebar {
             width: 250px;
             background-color: #1e293b;
@@ -92,7 +98,6 @@ HTML_CONTENT = """
             background-color: #334155;
             color: #fff;
         }
-        /* Hauptbereich */
         .main-content {
             flex: 1;
             display: flex;
@@ -111,7 +116,7 @@ HTML_CONTENT = """
             border-radius: 16px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
             text-align: center;
-            max-width: 320px;
+            max-width: 340px;
             width: 90%;
         }
         h1 { color: #38bdf8; margin-bottom: 5px; font-size: 22px; }
@@ -139,35 +144,50 @@ HTML_CONTENT = """
             border-radius: 20px;
             font-size: 14px;
             font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .verify-btn {
+            display: block;
+            width: 100%;
+            background-color: #5865F2;
+            color: white;
+            text-decoration: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            box-sizing: border-box;
+            transition: 0.2s;
+        }
+        .verify-btn:hover {
+            background-color: #4752C4;
         }
     </style>
 </head>
 <body>
-    <!-- Feste obere Leiste -->
     <div class="top-bar">
         <button class="menu-btn" onclick="toggleSidebar()">☰</button>
         <span class="app-title">Phantom Dashboard</span>
     </div>
 
-    <!-- Seitenleiste -->
     <div class="sidebar" id="sidebar">
         <a href="#">🏠 Übersicht</a>
         <a href="#">🤖 Bot Status</a>
-        <a href="#">⚙️ Einstellungen</a>
+        <a href="#">🔐 Verifizierung</a>
     </div>
 
-    <!-- Hauptbereich -->
     <div class="main-content">
         <div class="card">
             <h1>Phantom Bot</h1>
-            <p>Live-Überwachung</p>
+            <p>Verifiziere deinen Discord-Account</p>
             
             <div class="info-box">
-                <span>Bot Latenz (Ping):</span>
+                <span>Bot Latenz:</span>
                 <span id="ping" class="ping-value">Lade...</span>
             </div>
 
             <div id="status-badge" class="status">● Offline</div>
+
+            <a href="/login" class="verify-btn">Mit Discord verifizieren</a>
         </div>
     </div>
 
@@ -176,7 +196,6 @@ HTML_CONTENT = """
             document.getElementById('sidebar').classList.toggle('open');
         }
 
-        // Live-Daten alle 3 Sekunden von FastAPI abrufen
         async function updateStatus() {
             try {
                 let response = await fetch('/api/status');
@@ -214,11 +233,68 @@ def home():
 def api_status():
     return {"status": bot_status_text, "ping": bot_ping_ms}
 
+@app.get("/login")
+def login():
+    if not CLIENT_ID or not REDIRECT_URI:
+        return HTMLResponse("<h3>Fehler: Discord OAuth2 Variablen sind in Railway nicht konfiguriert!</h3>", status_code=500)
+    discord_login_url = f"https://discord.com/api/oauth2/authorize?client_id={CLIENT_ID}&redirect_uri={urllib.parse.quote(REDIRECT_URI)}&response_type=code&scope=identify"
+    return RedirectResponse(discord_login_url)
+
+@app.get("/callback", response_class=HTMLResponse)
+def callback(code: str):
+    # Token von Discord abrufen
+    data = urllib.parse.urlencode({
+        'client_id': CLIENT_ID,
+        'client_secret': CLIENT_SECRET,
+        'grant_type': 'authorization_code',
+        'code': code,
+        'redirect_uri': REDIRECT_URI,
+    }).encode('utf-8')
+
+    req = urllib.request.Request('https://discord.com/api/oauth2/token', data=data, method='POST')
+    req.add_header('Content-Type', 'application/x-www-form-urlencoded')
+
+    try:
+        with urllib.request.urlopen(req) as response:
+            res_data = json.loads(response.read().decode('utf-8'))
+            access_token = res_data.get('access_token')
+
+            # Benutzerinformationen abrufen
+            user_req = urllib.request.Request('https://discord.com/api/users/@me')
+            user_req.add_header('Authorization', f'Bearer {access_token}')
+            
+            with urllib.request.urlopen(user_req) as user_response:
+                user_data = json.loads(user_response.read().decode('utf-8'))
+                username = user_data.get('username')
+
+                return f"""
+                <!DOCTYPE html>
+                <html lang="de">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Verifiziert</title>
+                    <style>
+                        body {{ font-family: 'Segoe UI', sans-serif; background-color: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }}
+                        .success-card {{ background-color: #1e293b; padding: 40px; border-radius: 16px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }}
+                        h1 {{ color: #22c55e; }}
+                    </style>
+                </head>
+                <body>
+                    <div class="success-card">
+                        <h1>Verifizierung erfolgreich!</h1>
+                        <p>Willkommen, <b>{username}</b>! Dein Account wurde erfolgreich verifiziert.</p>
+                        <a href="/" style="color: #38bdf8; text-decoration: none; font-weight: bold;">Zurück zum Dashboard</a>
+                    </div>
+                </body>
+                </html>
+                """
+    except Exception as e:
+        return HTMLResponse(f"<h3>Authentifizierungsfehler aufgetreten: {e}</h3>", status_code=400)
+
 def run_server():
     port = int(os.environ.get("PORT", 8080))
     uvicorn.run(app, host="0.0.0.0", port=port)
 
-# Discord Bot Setup
 intents = discord.Intents.default()
 intents.guilds = True
 intents.members = True
