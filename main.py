@@ -11,82 +11,76 @@ def index():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Phantom Dashboard</title>
+        <title>Phantom | Dashboard</title>
         <style>
+            :root {
+                --bg: #09090b;
+                --card-bg: #18181b;
+                --text: #f4f4f5;
+                --accent: #3b82f6;
+            }
             body {
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                background-color: #0d1117;
-                color: #c9d1d9;
+                font-family: 'Inter', system-ui, sans-serif;
+                background-color: var(--bg);
+                color: var(--text);
                 margin: 0;
-                padding: 40px;
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                height: 100vh;
+                min-height: 100vh;
             }
-            .dashboard {
-                width: 100%;
+            .container {
+                width: 90%;
                 max-width: 800px;
-                background: #161b22;
+                background: var(--card-bg);
                 padding: 40px;
-                border-radius: 12px;
-                box-shadow: 0 8px 24px rgba(0,0,0,0.6);
-                border: 1px solid #30363d;
+                border-radius: 20px;
+                border: 1px solid #27272a;
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
             }
-            h1 {
-                color: #58a6ff;
-                margin-top: 0;
-                font-size: 28px;
-                border-bottom: 1px solid #30363d;
-                padding-bottom: 15px;
+            h1 { font-size: 2rem; margin-bottom: 10px; }
+            .badge {
+                background: rgba(59, 130, 246, 0.1);
+                color: var(--accent);
+                padding: 5px 12px;
+                border-radius: 99px;
+                font-size: 0.8rem;
+                font-weight: 600;
             }
-            .card-grid {
+            .stats {
                 display: grid;
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
                 gap: 20px;
-                margin-top: 25px;
+                margin-top: 30px;
             }
-            .card {
-                background: #21262d;
+            .stat-card {
+                background: #27272a;
                 padding: 20px;
-                border-radius: 8px;
-                border: 1px solid #30363d;
+                border-radius: 12px;
+                border: 1px solid #3f3f46;
             }
-            .card h3 {
-                margin-top: 0;
-                color: #8b949e;
-                font-size: 14px;
-                text-transform: uppercase;
-            }
-            .card p {
-                font-size: 22px;
-                font-weight: bold;
-                color: #f0f6fc;
-                margin: 10px 0 0 0;
-            }
-            .status {
-                display: inline-block;
-                width: 10px;
-                height: 10px;
-                background-color: #238636;
-                border-radius: 50%;
-                margin-right: 8px;
-            }
+            .stat-card h3 { color: #a1a1aa; font-size: 0.9rem; margin: 0; }
+            .stat-card p { font-size: 1.5rem; font-weight: bold; margin: 10px 0 0 0; }
         </style>
     </head>
     <body>
-        <div class="dashboard">
+        <div class="container">
+            <span class="badge">LIVE STATUS</span>
             <h1>Phantom Dashboard</h1>
-            <p><span class="status"></span>Systemstatus: <strong>Online & Stabil</strong></p>
+            <p style="color: #a1a1aa;">Willkommen auf deinem hochmodernen Dashboard.</p>
             
-            <div class="card-grid">
-                <div class="card">
-                    <h3>Server</h3>
-                    <p>Railway (Nixpacks)</p>
+            <div class="stats">
+                <div class="stat-card">
+                    <h3>Uptime</h3>
+                    <p>100%</p>
                 </div>
-                <div class="card">
-                    <h3>Modus</h3>
-                    <p>Öffentlich (Kein Login)</p>
+                <div class="stat-card">
+                    <h3>Server</h3>
+                    <p>Active</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Latency</h3>
+                    <p>~12ms</p>
                 </div>
             </div>
         </div>
