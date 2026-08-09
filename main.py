@@ -40,15 +40,21 @@ HTML_CONTENT = """
             left: -250px;
             transition: left 0.3s ease;
             z-index: 100;
+            box-sizing: border-box;
         }
         .sidebar.open {
             left: 0;
         }
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
         .sidebar h2 {
             color: #38bdf8;
             font-size: 20px;
-            margin-bottom: 30px;
-            margin-top: 10px;
+            margin: 0;
         }
         .sidebar a {
             color: #94a3b8;
@@ -72,8 +78,21 @@ HTML_CONTENT = """
             width: 100vw;
             padding: 20px;
         }
-        /* Menü-Button direkt an der Seitenleiste fixiert */
+        /* Menü-Button sitzt jetzt direkt IM Menü */
         .menu-btn {
+            background-color: #334155;
+            border: none;
+            color: #f8fafc;
+            font-size: 20px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .menu-btn:hover {
+            background-color: #475569;
+        }
+        /* Wenn das Menü zu ist, brauchen wir einen schwebenden Button am linken Bildschirmrand */
+        .floating-btn {
             position: fixed;
             top: 15px;
             left: 15px;
@@ -85,13 +104,7 @@ HTML_CONTENT = """
             border-radius: 8px;
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            transition: left 0.3s ease;
             z-index: 101;
-        }
-        /* Wenn offen, wandert der Button mit nach rechts an den Rand der Leiste */
-        .sidebar.open ~ .menu-btn {
-            left: 265px;
-            background-color: #334155;
         }
         .card {
             background-color: #1e293b;
@@ -117,16 +130,19 @@ HTML_CONTENT = """
     </style>
 </head>
 <body>
-    <!-- Seitenleiste -->
+    <!-- Schwebender Button, wenn die Leiste eingeklappt ist -->
+    <button class="floating-btn" onclick="toggleSidebar()">☰</button>
+
+    <!-- Seitenleiste (inkl. Button oben rechts im Header) -->
     <div class="sidebar" id="sidebar">
-        <h2>Phantom Menu</h2>
+        <div class="sidebar-header">
+            <h2>Phantom</h2>
+            <button class="menu-btn" onclick="toggleSidebar()">✕</button>
+        </div>
         <a href="#">🏠 Übersicht</a>
         <a href="#">🤖 Bot Status</a>
         <a href="#">⚙️ Einstellungen</a>
     </div>
-
-    <!-- Menü-Button -->
-    <button class="menu-btn" onclick="toggleSidebar()">☰</button>
 
     <!-- Hauptbereich -->
     <div class="main-content">
