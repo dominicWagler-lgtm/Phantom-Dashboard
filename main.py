@@ -17,6 +17,7 @@ HTML_TEMPLATE = """
             color: #ffffff;
             margin: 0;
             padding: 0;
+            overflow-x: hidden; /* Verhindert das Wegziehen nach links/rechts */
         }
 
         /* Willkommensseite / Fragen-Screen */
@@ -28,9 +29,10 @@ HTML_TEMPLATE = """
             height: 100vh;
             text-align: center;
             padding: 20px;
+            box-sizing: border-box;
         }
         #welcome-screen h1 {
-            font-size: 2.2rem;
+            font-size: 2rem;
             margin-bottom: 20px;
         }
         .btn {
@@ -55,16 +57,17 @@ HTML_TEMPLATE = """
             border: 1px solid #333;
             max-width: 400px;
             width: 100%;
+            box-sizing: border-box;
         }
         .question-box h2 {
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             margin-bottom: 20px;
         }
 
         /* Dashboard (standardmäßig unsichtbar) */
         #dashboard {
             display: none;
-            height: 100vh;
+            min-height: 100vh;
         }
 
         /* Linke Menüleiste (ein-/ausklappbar) */
@@ -105,6 +108,7 @@ HTML_TEMPLATE = """
             margin-left: 220px;
             padding: 20px;
             transition: margin-left 0.3s ease;
+            box-sizing: border-box;
         }
         .main-content.expanded {
             margin-left: 0;
@@ -130,7 +134,7 @@ HTML_TEMPLATE = """
             background-color: #444;
         }
         .top-header {
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             font-weight: bold;
         }
     </style>
@@ -189,21 +193,17 @@ HTML_TEMPLATE = """
 
     <script>
         function startQuiz() {
-            // Start-Button ausblenden, Frage 1 anzeigen
             document.getElementById('start-btn-container').style.display = 'none';
             document.getElementById('q1').style.display = 'block';
         }
 
         function nextQuestion(current, answer) {
-            // Aktuelle Frage verstecken
             document.getElementById('q' + current).style.display = 'none';
 
             let next = current + 1;
             if (next <= 3) {
-                // Nächste Frage anzeigen
                 document.getElementById('q' + next).style.display = 'block';
             } else {
-                // Wenn alle Fragen beantwortet sind: Willkommensscreen komplett ausblenden und Dashboard zeigen
                 document.getElementById('welcome-screen').style.display = 'none';
                 document.getElementById('dashboard').style.display = 'block';
             }
