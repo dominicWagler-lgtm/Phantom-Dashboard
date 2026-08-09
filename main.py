@@ -6,16 +6,14 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 import uvicorn
 
-# FastAPI-App erstellen
 app = FastAPI()
 
-# HTML-Inhalt mit Seitenleiste und Drei-Striche-Menü
 HTML_CONTENT = """
 <!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Phantom Dashboard</title>
     <style>
         body {
@@ -25,9 +23,10 @@ HTML_CONTENT = """
             margin: 0;
             display: flex;
             height: 100vh;
-            overflow: hidden;
+            width: 100vw;
+            overflow-x: hidden;
+            position: relative;
         }
-        /* Seitenleiste */
         .sidebar {
             width: 250px;
             background-color: #1e293b;
@@ -62,17 +61,15 @@ HTML_CONTENT = """
             background-color: #334155;
             color: #fff;
         }
-        /* Hauptbereich */
         .main-content {
             flex: 1;
             display: flex;
             justify-content: center;
             align-items: center;
             flex-direction: column;
-            width: 100%;
+            width: 100vw;
             padding: 20px;
         }
-        /* Menü-Button (Drei Striche) */
         .menu-btn {
             position: absolute;
             top: 20px;
@@ -87,26 +84,17 @@ HTML_CONTENT = """
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
             z-index: 101;
         }
-        .menu-btn:hover {
-            background-color: #334155;
-        }
         .card {
             background-color: #1e293b;
             padding: 40px;
             border-radius: 16px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
             text-align: center;
-            max-width: 400px;
-            width: 100%;
+            max-width: 300px;
+            width: 90%;
         }
-        h1 {
-            color: #38bdf8;
-            margin-bottom: 10px;
-        }
-        p {
-            color: #94a3b8;
-            font-size: 16px;
-        }
+        h1 { color: #38bdf8; margin-bottom: 10px; font-size: 24px; }
+        p { color: #94a3b8; font-size: 16px; }
         .status {
             display: inline-block;
             background-color: #22c55e;
@@ -120,32 +108,23 @@ HTML_CONTENT = """
     </style>
 </head>
 <body>
-
-    <!-- Drei-Striche Menü-Button -->
     <button class="menu-btn" onclick="toggleSidebar()">☰</button>
-
-    <!-- Seitenleiste -->
     <div class="sidebar" id="sidebar">
         <h2>Phantom Menu</h2>
         <a href="#">🏠 Übersicht</a>
         <a href="#">🤖 Bot Status</a>
         <a href="#">⚙️ Einstellungen</a>
-        <a href="#">📊 Statistiken</a>
     </div>
-
-    <!-- Hauptbereich -->
     <div class="main-content">
         <div class="card">
             <h1>Phantom Dashboard</h1>
-            <p>Dein Discord-Bot und Webserver laufen stabil.</p>
+            <p>Dein Dashboard ist jetzt fixiert!</p>
             <div class="status">● Online</div>
         </div>
     </div>
-
     <script>
         function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('open');
+            document.getElementById('sidebar').classList.toggle('open');
         }
     </script>
 </body>
@@ -160,23 +139,10 @@ def run_server():
     port = int(os.environ.get("PORT", 8080))
     uvicorn.run(app, host="0.0.0.0", port=port)
 
-def keep_alive():
+if __name__ == "__main__":
     t = threading.Thread(target=run_server)
     t.start()
-
-# Discord Bot Setup
-intents = discord.Intents.default()
-intents.guilds = True
-intents.members = True
-
-bot = commands.Bot(command_prefix="/", intents=intents)
-
-@bot.event
-async def on_ready():
-    print(f'Eingeloggt als {bot.user}')
-
-if __name__ == "__main__":
-    keep_alive()
     TOKEN = os.environ.get('DISCORD_TOKEN')
     if TOKEN:
+        bot = commands.Bot(command_prefix="/", intents=discord.Intents.default())
         bot.run(TOKEN)
