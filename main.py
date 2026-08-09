@@ -4,7 +4,6 @@ from flask import Flask, render_template_string, request, redirect, url_for
 
 app = Flask(__name__)
 
-# Globale Variable für Einstellungen (zum Verwalten)
 bot_settings = {
     "prefix": "/",
     "default_role": "@Student",
@@ -13,14 +12,25 @@ bot_settings = {
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    # Wenn Einstellungen im Admin-Panel geändert und abgesendet werden
     if request.method == "POST":
-        bot_settings["prefix"] = request.form.get("prefix", "/")
-        bot_settings["default_role"] = request.form.get("default_role", "@Student")
-        bot_settings["log_channel"] = request.form.get("log_channel", "#bot-logs")
-        return redirect(url_for("index"))
+        action = request.form.get("action")
+        
+        # Einstellungen speichern
+        if action == "save_settings":
+            bot_settings["prefix"] = request.form.get("prefix", "/")
+            bot_settings["default_role"] = request.form.get("default_role", "@Student")
+            bot_settings["log_channel"] = request.form.get("log_channel", "#bot-logs")
+            return redirect(url_for("index"))
+            
+        # Bot von Server kicken (Leave Server via API)
+        elif action == "kick_bot":
+            guild_id = request.form.get("guild_id")
+            bot_token = os.environ.get("DISCORD_TOKEN")
+            if bot_token and guild_id:
+                headers = {"Authorization": f"Bot {bot_token}"}
+                requests.delete(f"https://discord.com/api/v10/users/@me/guilds/{guild_id}", headers=headers)
+            return redirect(url_for("index"))
 
-    # Echte Live-Server über den Discord Bot Token laden
     bot_token = os.environ.get("DISCORD_TOKEN")
     servers = []
     
@@ -48,6 +58,8 @@ def index():
                 --accent: #6366f1;
                 --accent-hover: #4f46e5;
                 --success: #10b981;
+                --danger: #ef4444;
+                --danger-hover: #dc2626;
                 --warning: #f59e0b;
             }
             body {
@@ -58,7 +70,7 @@ def index():
                 display: flex;
                 min-height: 100vh;
             }
-            /* Sidebar Menüleiste */
+            /* Ausklappbare Sidebar */
             sidebar {
                 width: 260px;
                 background-color: var(--bg-sidebar);
@@ -67,15 +79,16 @@ def index():
                 flex-direction: column;
                 padding: 20px;
                 box-sizing: border-box;
+                transition: transform 0.3s ease;
+            }
+            body.sidebar-closed sidebar {
+                display: none;
             }
             .sidebar-brand {
                 font-size: 18px;
                 font-weight: bold;
                 color: var(--text-main);
                 margin-bottom: 30px;
-                display: flex;
-                align-items: center;
-                gap: 10px;
             }
             .nav-menu {
                 list-style: none;
@@ -118,6 +131,20 @@ def index():
                 border-radius: 16px;
                 margin-bottom: 30px;
             }
+            .header-left {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
+            .toggle-btn {
+                background: #1f2937;
+                border: 1px solid #374151;
+                color: white;
+                padding: 8px 12px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 16px;
+            }
             h1 { margin: 0; font-size: 20px; }
             .badge {
                 background: rgba(16, 185, 129, 0.1);
@@ -145,7 +172,7 @@ def index():
             /* Server Grid */
             .server-grid {
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
                 gap: 15px;
             }
             .server-card {
@@ -153,6 +180,11 @@ def index():
                 border: 1px solid #374151;
                 padding: 16px;
                 border-radius: 12px;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+            .server-header {
                 display: flex;
                 align-items: center;
                 gap: 15px;
@@ -168,10 +200,32 @@ def index():
                 font-weight: bold;
                 font-size: 18px;
                 overflow: hidden;
+                flex-shrink: 0;
             }
             .server-icon img { width: 100%; height: 100%; object-fit: cover; }
             .server-info h4 { margin: 0 0 4px 0; font-size: 15px; }
             .server-info p { margin: 0; font-size: 12px; color: var(--text-muted); }
+            .server-actions {
+                display: flex;
+                gap: 10px;
+                border-top: 1px solid #374151;
+                padding-top: 10px;
+            }
+            .btn-action {
+                flex: 1;
+                padding: 8px;
+                border-radius: 6px;
+                font-size: 13px;
+                font-weight: 600;
+                text-align: center;
+                text-decoration: none;
+                cursor: pointer;
+                border: none;
+            }
+            .btn-join { background-color: var(--accent); color: white; }
+            .btn-join:hover { background-color: var(--accent-hover); }
+            .btn-kick { background-color: var(--danger); color: white; }
+            .btn-kick:hover { background-color: var(--danger-hover); }
             /* Formulare */
             .form-group { margin-bottom: 15px; }
             .form-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; }
@@ -206,61 +260,73 @@ def index():
             }
         </style>
     </head>
-    <body>
+    <body id="body">
 
-        <!-- Linke Menüleiste (Sidebar) -->
+        <!-- Sidebar Menüleiste -->
         <sidebar>
-            <div class="sidebar-brand">
-                🤖 University Bot
-            </div>
+            <div class="sidebar-brand">🤖 University Bot</div>
             <ul class="nav-menu">
                 <li class="nav-item active"><a href="#">📊 Übersicht & Server</a></li>
-                <li class="nav-item"><a href="#settings">⚙️ Bot-Einstellungen</a></li>
+                <li class="nav-item"><a href="#settings">⚙️ Einstellungen</a></li>
             </ul>
         </sidebar>
 
-        <!-- Rechter Verwaltungsbereich -->
+        <!-- Hauptbereich -->
         <div class="main-content">
             <div class="header-top">
-                <div>
-                    <h1>Admin Dashboard</h1>
-                    <p style="margin: 4px 0 0 0; color: var(--text-muted); font-size: 13px;">Echtzeit-Verwaltung</p>
+                <div class="header-left">
+                    <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+                    <div>
+                        <h1>Admin Dashboard</h1>
+                        <p style="margin: 4px 0 0 0; color: var(--text-muted); font-size: 13px;">Echtzeit-Verwaltung</p>
+                    </div>
                 </div>
                 <div class="badge">Live Verbunden</div>
             </div>
 
-            <!-- Live Server Sektion -->
+            <!-- Live Server Sektion mit Join & Bot Entfernen -->
             <div class="panel">
-                <h2>Echte Live-Server (Auf denen der Bot ist)</h2>
+                <h2>Echte Live-Server</h2>
                 {% if servers %}
                     <div class="server-grid">
                         {% for server in servers %}
                             <div class="server-card">
-                                <div class="server-icon">
-                                    {% if server.icon %}
-                                        <img src="https://cdn.discordapp.com/icons/{{ server.id }}/{{ server.icon }}.png" alt="Icon">
-                                    {% else %}
-                                        {{ server.name[0] }}
-                                    {% endif %}
+                                <div class="server-header">
+                                    <div class="server-icon">
+                                        {% if server.icon %}
+                                            <img src="https://cdn.discordapp.com/icons/{{ server.id }}/{{ server.icon }}.png" alt="Icon">
+                                        {% else %}
+                                            {{ server.name[0] }}
+                                        {% endif %}
+                                    </div>
+                                    <div class="server-info">
+                                        <h4>{{ server.name }}</h4>
+                                        <p>ID: {{ server.id }}</p>
+                                    </div>
                                 </div>
-                                <div class="server-info">
-                                    <h4>{{ server.name }}</h4>
-                                    <p>ID: {{ server.id }}</p>
+                                <div class="server-actions">
+                                    <a href="https://discord.com/channels/{{ server.id }}" target="_blank" class="btn-action btn-join">Server beitreten</a>
+                                    <form method="POST" style="flex: 1; display: flex;" onsubmit="return confirm('Willst du den Bot wirklich von diesem Server entfernen?');">
+                                        <input type="hidden" name="action" value="kick_bot">
+                                        <input type="hidden" name="guild_id" value="{{ server.id }}">
+                                        <button type="submit" class="btn-action btn-kick" style="width: 100%;">Bot entfernen</button>
+                                    </form>
                                 </div>
                             </div>
                         {% endfor %}
                     </div>
                 {% else %}
                     <div class="alert">
-                        <strong>Kein Bot-Token hinterlegt!</strong> Füge in Railway unter <strong>Variables</strong> die Variable <code>DISCORD_TOKEN</code> hinzu, damit deine echten Server hier live geladen werden.
+                        <strong>Kein Bot-Token hinterlegt!</strong> Füge in Railway unter <strong>Variables</strong> die Variable <code>DISCORD_TOKEN</code> hinzu.
                     </div>
                 {% endif %}
             </div>
 
-            <!-- Bot-Einstellungen verwalten Sektion -->
+            <!-- Einstellungen -->
             <div class="panel" id="settings">
                 <h2>Bot-Einstellungen verwalten</h2>
                 <form method="POST">
+                    <input type="hidden" name="action" value="save_settings">
                     <div class="form-group">
                         <label>Bot-Präfix</label>
                         <input type="text" class="form-input" name="prefix" value="{{ settings.prefix }}">
@@ -278,6 +344,11 @@ def index():
             </div>
         </div>
 
+        <script>
+            function toggleSidebar() {
+                document.getElementById('body').classList.toggle('sidebar-closed');
+            }
+        </script>
     </body>
     </html>
     """
