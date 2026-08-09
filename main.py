@@ -22,12 +22,41 @@ HTML_CONTENT = """
             color: #f8fafc;
             margin: 0;
             display: flex;
+            flex-direction: column;
             height: 100vh;
             width: 100vw;
             overflow-x: hidden;
-            position: relative;
         }
-        /* Seitenleiste */
+        /* Feste obere Leiste (App-Header) */
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background-color: #1e293b;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 102;
+            box-sizing: border-box;
+        }
+        .menu-btn {
+            background: none;
+            border: none;
+            color: #f8fafc;
+            font-size: 24px;
+            cursor: pointer;
+            margin-right: 15px;
+            padding: 0;
+        }
+        .app-title {
+            color: #38bdf8;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        /* Seitenleiste klappt unter der Top-Leiste aus */
         .sidebar {
             width: 250px;
             background-color: #1e293b;
@@ -36,25 +65,15 @@ HTML_CONTENT = """
             padding: 20px;
             box-shadow: 4px 0 10px rgba(0, 0, 0, 0.2);
             position: fixed;
-            height: 100%;
+            top: 60px;
+            height: calc(100vh - 60px);
             left: -250px;
             transition: left 0.3s ease;
-            z-index: 100;
+            z-index: 101;
             box-sizing: border-box;
         }
         .sidebar.open {
             left: 0;
-        }
-        .sidebar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-        .sidebar h2 {
-            color: #38bdf8;
-            font-size: 20px;
-            margin: 0;
         }
         .sidebar a {
             color: #94a3b8;
@@ -69,42 +88,18 @@ HTML_CONTENT = """
             background-color: #334155;
             color: #fff;
         }
+        /* Hauptbereich */
         .main-content {
             flex: 1;
             display: flex;
             justify-content: center;
             align-items: center;
             flex-direction: column;
+            margin-top: 60px;
+            height: calc(100vh - 60px);
             width: 100vw;
             padding: 20px;
-        }
-        /* Menü-Button sitzt jetzt direkt IM Menü */
-        .menu-btn {
-            background-color: #334155;
-            border: none;
-            color: #f8fafc;
-            font-size: 20px;
-            padding: 6px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-        .menu-btn:hover {
-            background-color: #475569;
-        }
-        /* Wenn das Menü zu ist, brauchen wir einen schwebenden Button am linken Bildschirmrand */
-        .floating-btn {
-            position: fixed;
-            top: 15px;
-            left: 15px;
-            background-color: #1e293b;
-            border: none;
-            color: #f8fafc;
-            font-size: 22px;
-            padding: 8px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            z-index: 101;
+            box-sizing: border-box;
         }
         .card {
             background-color: #1e293b;
@@ -115,8 +110,8 @@ HTML_CONTENT = """
             max-width: 300px;
             width: 90%;
         }
-        h1 { color: #38bdf8; margin-bottom: 10px; font-size: 24px; }
-        p { color: #94a3b8; font-size: 16px; }
+        h1 { color: #38bdf8; margin-bottom: 10px; font-size: 22px; }
+        p { color: #94a3b8; font-size: 15px; }
         .status {
             display: inline-block;
             background-color: #22c55e;
@@ -130,15 +125,14 @@ HTML_CONTENT = """
     </style>
 </head>
 <body>
-    <!-- Schwebender Button, wenn die Leiste eingeklappt ist -->
-    <button class="floating-btn" onclick="toggleSidebar()">☰</button>
+    <!-- Feste obere Leiste -->
+    <div class="top-bar">
+        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+        <span class="app-title">Phantom Dashboard</span>
+    </div>
 
-    <!-- Seitenleiste (inkl. Button oben rechts im Header) -->
+    <!-- Seitenleiste -->
     <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <h2>Phantom</h2>
-            <button class="menu-btn" onclick="toggleSidebar()">✕</button>
-        </div>
         <a href="#">🏠 Übersicht</a>
         <a href="#">🤖 Bot Status</a>
         <a href="#">⚙️ Einstellungen</a>
@@ -148,7 +142,7 @@ HTML_CONTENT = """
     <div class="main-content">
         <div class="card">
             <h1>Phantom Dashboard</h1>
-            <p>Dein Dashboard ist jetzt fixiert!</p>
+            <p>Dein Dashboard läuft stabil!</p>
             <div class="status">● Online</div>
         </div>
     </div>
