@@ -1,32 +1,98 @@
-import discord
 import os
-from fastapi import FastAPI
-import uvicorn
 import threading
+import discord
+from discord.ext import commands
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+import uvicorn
 
-# FastAPI-App für das Dashboard erstellen
+# FastAPI-App erstellen
 app = FastAPI()
 
-@app.get("/")
+# HTML-Inhalt für dein Dashboard
+HTML_CONTENT = """
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phantom Dashboard</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background-color: #1e293b;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        h1 {
+            color: #38bdf8;
+            margin-bottom: 10px;
+        }
+        p {
+            color: #94a3b8;
+            font-size: 16px;
+        }
+        .status {
+            display: inline-block;
+            background-color: #22c55e;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Phantom Dashboard</h1>
+        <p>Dein Discord-Bot und Webserver laufen stabil.</p>
+        <div class="status">● Online</div>
+    </div>
+</body>
+</html>
+"""
+
+@app.get("/", response_class=HTMLResponse)
 def home():
-    return {"message": "Mein Phantom-Dashboard mit FastAPI läuft!"}
+    return HTML_CONTENT
 
 def run_server():
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    port = int(os.environ.get("PORT", 8080))
+    uvicorn.run(app, host="0.0.0.0", port=port)
 
 # Webserver im Hintergrund starten
 def keep_alive():
     t = threading.Thread(target=run_server)
     t.start()
 
-# Discord Bot starten
+# Discord Bot Setup
 intents = discord.Intents.default()
-client = discord.Client(intents=intents)
+intents.guilds = True
+intents.members = True
 
-@client.event
+bot = commands.Bot(command_prefix="/", intents=intents)
+
+@bot.event
 async def on_ready():
-    print(f'Eingeloggt als {client.user}')
+    print(f'Eingeloggt als {bot.user}')
 
 if __name__ == "__main__":
     keep_alive()
-    client.run(os.environ.get('DISCORD_TOKEN'))
+    TOKEN = os.environ.get('DISCORD_TOKEN')
+    if TOKEN:
+        bot.run(TOKEN)
