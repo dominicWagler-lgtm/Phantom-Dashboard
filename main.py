@@ -27,6 +27,7 @@ HTML_CONTENT = """
             overflow-x: hidden;
             position: relative;
         }
+        /* Seitenleiste */
         .sidebar {
             width: 250px;
             background-color: #1e293b;
@@ -47,6 +48,7 @@ HTML_CONTENT = """
             color: #38bdf8;
             font-size: 20px;
             margin-bottom: 30px;
+            margin-top: 10px;
         }
         .sidebar a {
             color: #94a3b8;
@@ -70,19 +72,26 @@ HTML_CONTENT = """
             width: 100vw;
             padding: 20px;
         }
+        /* Menü-Button direkt an der Seitenleiste fixiert */
         .menu-btn {
-            position: absolute;
-            top: 20px;
-            left: 20px;
+            position: fixed;
+            top: 15px;
+            left: 15px;
             background-color: #1e293b;
             border: none;
             color: #f8fafc;
-            font-size: 24px;
-            padding: 10px 14px;
+            font-size: 22px;
+            padding: 8px 12px;
             border-radius: 8px;
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            transition: left 0.3s ease;
             z-index: 101;
+        }
+        /* Wenn offen, wandert der Button mit nach rechts an den Rand der Leiste */
+        .sidebar.open ~ .menu-btn {
+            left: 265px;
+            background-color: #334155;
         }
         .card {
             background-color: #1e293b;
@@ -108,13 +117,18 @@ HTML_CONTENT = """
     </style>
 </head>
 <body>
-    <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+    <!-- Seitenleiste -->
     <div class="sidebar" id="sidebar">
         <h2>Phantom Menu</h2>
         <a href="#">🏠 Übersicht</a>
         <a href="#">🤖 Bot Status</a>
         <a href="#">⚙️ Einstellungen</a>
     </div>
+
+    <!-- Menü-Button -->
+    <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+
+    <!-- Hauptbereich -->
     <div class="main-content">
         <div class="card">
             <h1>Phantom Dashboard</h1>
@@ -122,6 +136,7 @@ HTML_CONTENT = """
             <div class="status">● Online</div>
         </div>
     </div>
+
     <script>
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('open');
