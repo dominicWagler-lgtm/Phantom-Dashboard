@@ -64,6 +64,32 @@ def index():
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
         <title>Bot Control Panel</title>
         <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+            @keyframes spin-gradient {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            .spinning-border {
+                position: relative;
+                overflow: hidden;
+                border-radius: 0.75rem;
+                padding: 1px;
+            }
+            .spinning-border::before {
+                content: '';
+                position: absolute;
+                inset: -50%;
+                background: conic-gradient(from 0deg at 50% 50%, #3b82f6 0deg, #ffffff 90deg, #3b82f6 180deg, #ffffff 270deg, #3b82f6 360deg);
+                animation: spin-gradient 3s linear infinite;
+                z-index: 0;
+            }
+            .spinning-inner {
+                position: relative;
+                background: #000000;
+                z-index: 1;
+                border-radius: calc(0.75rem - 1px);
+            }
+        </style>
         <script>
             tailwind.config = {
                 darkMode: 'class',
@@ -83,7 +109,7 @@ def index():
     </head>
     <body class="bg-darkBg text-gray-100 font-sans antialiased min-h-screen flex flex-col md:flex-row overflow-x-hidden">
 
-        <!-- Linke Seitenleiste (Task/Navigation) -->
+        <!-- Linke Seitenleiste (Task / Menü) -->
         <aside class="w-full md:w-64 bg-cardBg border-b md:border-b-0 md:border-r border-cardBorder p-4 flex md:flex-col justify-between items-center md:items-stretch shrink-0">
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-sm shadow">🤖</div>
@@ -94,16 +120,26 @@ def index():
                     </span>
                 </div>
             </div>
-            <nav class="hidden md:flex flex-col gap-1.5 mt-6">
-                <a href="#" class="px-3 py-2 rounded-xl bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold flex items-center gap-2.5">
-                    📊 Server & Rollen
-                </a>
-                <a href="#settings" class="px-3 py-2 rounded-xl text-gray-400 hover:bg-gray-800/50 hover:text-gray-200 text-xs font-medium flex items-center gap-2.5 transition-colors">
+
+            <!-- Menü in der linken Seitenleiste -->
+            <nav class="hidden md:flex flex-col gap-2 mt-6">
+                <!-- Aktiver Button mit rotierendem Weiß-Blau-Rand und schwarzem Innenbereich -->
+                <div class="spinning-border shadow-lg">
+                    <div class="spinning-inner px-3 py-2.5 flex items-center gap-2.5 text-xs font-semibold text-white">
+                        📊 Dashboard & Server
+                    </div>
+                </div>
+
+                <a href="#settings" class="px-3 py-2.5 rounded-xl bg-black border border-cardBorder text-gray-400 hover:text-white text-xs font-medium flex items-center gap-2.5 transition-colors">
                     ⚙️ Einstellungen
                 </a>
+                <a href="#serverSearch" class="px-3 py-2.5 rounded-xl bg-black border border-cardBorder text-gray-400 hover:text-white text-xs font-medium flex items-center gap-2.5 transition-colors">
+                    🔍 Server Suchen
+                </a>
             </nav>
+
             <div class="hidden md:block pt-4 border-t border-cardBorder text-[10px] text-gray-500 text-center">
-                v3.0 Ready
+                v3.1 Ready
             </div>
         </aside>
 
