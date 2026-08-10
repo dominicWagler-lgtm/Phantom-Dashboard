@@ -65,29 +65,32 @@ def index():
         <title>Bot Control Panel</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
-            @keyframes spin-gradient {
+            @keyframes rotate-border {
                 0% { transform: rotate(0deg); }
                 100% { transform: rotate(360deg); }
             }
-            .spinning-border {
+            .modern-glow-btn {
                 position: relative;
+                border-radius: 1rem;
                 overflow: hidden;
-                border-radius: 0.75rem;
-                padding: 1px;
+                padding: 1.5px;
+                isolation: isolate;
             }
-            .spinning-border::before {
+            .modern-glow-btn::before {
                 content: '';
                 position: absolute;
                 inset: -50%;
-                background: conic-gradient(from 0deg at 50% 50%, #3b82f6 0deg, #ffffff 90deg, #3b82f6 180deg, #ffffff 270deg, #3b82f6 360deg);
-                animation: spin-gradient 3s linear infinite;
-                z-index: 0;
+                background: conic-gradient(from 0deg, transparent 0deg, transparent 60deg, #3b82f6 140deg, #ffffff 180deg, #3b82f6 220deg, transparent 300deg, transparent 360deg);
+                animation: rotate-border 3.5s linear infinite;
+                z-index: -1;
             }
-            .spinning-inner {
-                position: relative;
+            .modern-glow-content {
                 background: #000000;
-                z-index: 1;
-                border-radius: calc(0.75rem - 1px);
+                border-radius: calc(1rem - 1.5px);
+                transition: background 0.2s ease;
+            }
+            .modern-glow-btn:hover .modern-glow-content {
+                background: #090d16;
             }
         </style>
         <script>
@@ -110,63 +113,62 @@ def index():
     <body class="bg-darkBg text-gray-100 font-sans antialiased min-h-screen flex flex-col overflow-x-hidden">
 
         <!-- Top-Header mit Hamburger-Menü Button (3 Striche) -->
-        <header class="bg-cardBg border-b border-cardBorder px-4 py-3 flex justify-between items-center sticky top-0 z-50 shadow-md">
-            <div class="flex items-center gap-3">
-                <!-- Hamburger Button (3 Striche) -->
-                <button onclick="toggleSidebar()" class="w-9 h-9 rounded-xl bg-darkBg border border-cardBorder flex flex-col justify-center items-center gap-1.5 focus:outline-none hover:border-indigo-500 transition-colors">
-                    <span class="w-4 h-0.5 bg-white rounded-full"></span>
-                    <span class="w-4 h-0.5 bg-white rounded-full"></span>
-                    <span class="w-4 h-0.5 bg-white rounded-full"></span>
+        <header class="bg-cardBg border-b border-cardBorder px-4 py-3.5 flex justify-between items-center sticky top-0 z-50 shadow-md">
+            <div class="flex items-center gap-3.5">
+                <button onclick="toggleSidebar()" class="w-10 h-10 rounded-xl bg-darkBg border border-cardBorder flex flex-col justify-center items-center gap-1 focus:outline-none hover:border-indigo-500 transition-all shadow-sm active:scale-95">
+                    <span class="w-4 h-0.5 bg-gray-200 rounded-full"></span>
+                    <span class="w-4 h-0.5 bg-gray-200 rounded-full"></span>
+                    <span class="w-4 h-0.5 bg-gray-200 rounded-full"></span>
                 </button>
                 <div class="flex items-center gap-2.5">
                     <div class="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-xs shadow">🤖</div>
                     <h1 class="font-bold text-sm tracking-wide">Bot Control Panel</h1>
                 </div>
             </div>
-            <div class="flex items-center gap-2 shrink-0">
+            <div class="flex items-center gap-2 shrink-0 bg-darkBg border border-cardBorder px-2.5 py-1 rounded-full">
                 <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span class="text-xs text-emerald-400 font-medium">Online</span>
+                <span class="text-[11px] text-emerald-400 font-medium">Online</span>
             </div>
         </header>
 
-        <!-- Overlay für das Menü -->
-        <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/60 z-50 hidden transition-opacity"></div>
+        <!-- Overlay -->
+        <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden transition-opacity"></div>
 
         <!-- Ausklappbares Seiten-Menü (Drawer) -->
-        <aside id="sidebar" class="fixed top-0 left-0 bottom-0 w-72 bg-cardBg border-r border-cardBorder z-50 transform -translate-x-full transition-transform duration-300 ease-in-out p-5 flex flex-col justify-between shadow-2xl">
+        <aside id="sidebar" class="fixed top-0 left-0 bottom-0 w-80 bg-cardBg border-r border-cardBorder z-50 transform -translate-x-full transition-transform duration-300 ease-in-out p-5 flex flex-col justify-between shadow-2xl">
             <div>
                 <div class="flex justify-between items-center pb-4 border-b border-cardBorder mb-6">
                     <div class="flex items-center gap-2.5">
                         <div class="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-sm shadow">🤖</div>
-                        <h2 class="font-bold text-sm">Navigation</h2>
+                        <h2 class="font-bold text-sm tracking-wide text-white">Menü</h2>
                     </div>
-                    <button onclick="toggleSidebar()" class="text-gray-400 hover:text-white text-lg font-bold px-2 py-1">✕</button>
+                    <button onclick="toggleSidebar()" class="w-8 h-8 rounded-lg bg-darkBg border border-cardBorder text-gray-400 hover:text-white flex items-center justify-center text-sm transition-colors">✕</button>
                 </div>
 
-                <!-- Menü-Buttons mit rotierendem Blau-Weiß-Rand und schwarzem Inhalt -->
-                <nav class="flex flex-col gap-3">
-                    <div class="spinning-border shadow-lg">
-                        <a href="#" onclick="toggleSidebar()" class="spinning-inner px-3.5 py-3 flex items-center gap-3 text-xs font-semibold text-white block">
-                            📊 Dashboard & Server
+                <!-- Modern gestaltete Menü-Buttons mit fließendem blau-weißem Rand & schwarzem Inhalt -->
+                <nav class="flex flex-col gap-3.5">
+                    <div class="modern-glow-btn shadow-xl">
+                        <a href="#" onclick="toggleSidebar()" class="modern-glow-content px-4 py-3 flex items-center gap-3 text-xs font-bold text-white block">
+                            <span class="text-base">📊</span> Dashboard & Server
                         </a>
                     </div>
 
-                    <div class="spinning-border shadow-lg">
-                        <a href="#settings" onclick="toggleSidebar()" class="spinning-inner px-3.5 py-3 flex items-center gap-3 text-xs font-semibold text-white block">
-                            ⚙️ Bot-Einstellungen
+                    <div class="modern-glow-btn shadow-xl">
+                        <a href="#settings" onclick="toggleSidebar()" class="modern-glow-content px-4 py-3 flex items-center gap-3 text-xs font-bold text-white block">
+                            <span class="text-base">⚙️</span> Bot-Einstellungen
                         </a>
                     </div>
 
-                    <div class="spinning-border shadow-lg">
-                        <a href="#serverSearch" onclick="toggleSidebar()" class="spinning-inner px-3.5 py-3 flex items-center gap-3 text-xs font-semibold text-white block">
-                            🔍 Server Suchen
+                    <div class="modern-glow-btn shadow-xl">
+                        <a href="#serverSearch" onclick="toggleSidebar()" class="modern-glow-content px-4 py-3 flex items-center gap-3 text-xs font-bold text-white block">
+                            <span class="text-base">🔍</span> Server Suchen
                         </a>
                     </div>
                 </nav>
             </div>
 
-            <div class="pt-4 border-t border-cardBorder text-[11px] text-gray-500 text-center">
-                v3.2 Fully Ready
+            <div class="pt-4 border-t border-cardBorder text-[11px] text-gray-500 text-center font-medium">
+                v3.3 Ultra Modern
             </div>
         </aside>
 
@@ -180,15 +182,15 @@ def index():
             {% endif %}
 
             <div class="grid grid-cols-3 gap-2.5">
-                <div class="bg-cardBg border border-cardBorder p-3 rounded-xl text-center">
+                <div class="bg-cardBg border border-cardBorder p-3 rounded-xl text-center shadow-sm">
                     <span class="text-[10px] text-gray-400 uppercase tracking-wider block">Server</span>
                     <p class="text-base sm:text-lg font-bold text-indigo-400 mt-0.5">{{ servers|length }}</p>
                 </div>
-                <div class="bg-cardBg border border-cardBorder p-3 rounded-xl text-center">
+                <div class="bg-cardBg border border-cardBorder p-3 rounded-xl text-center shadow-sm">
                     <span class="text-[10px] text-gray-400 uppercase tracking-wider block">Status</span>
                     <p class="text-base sm:text-lg font-bold text-emerald-400 mt-0.5">Aktiv</p>
                 </div>
-                <div class="bg-cardBg border border-cardBorder p-3 rounded-xl text-center">
+                <div class="bg-cardBg border border-cardBorder p-3 rounded-xl text-center shadow-sm">
                     <span class="text-[10px] text-gray-400 uppercase tracking-wider block">Ping</span>
                     <p class="text-base sm:text-lg font-bold text-purple-400 mt-0.5">~14 ms</p>
                 </div>
