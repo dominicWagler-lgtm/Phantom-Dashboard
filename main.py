@@ -81,119 +81,147 @@ def index():
             }
         </script>
     </head>
-    <body class="bg-darkBg text-gray-100 font-sans antialiased min-h-screen flex flex-col overflow-x-hidden">
+    <body class="bg-darkBg text-gray-100 font-sans antialiased min-h-screen flex flex-col md:flex-row overflow-x-hidden">
 
-        <header class="bg-cardBg border-b border-cardBorder px-4 py-3 flex justify-between items-center sticky top-0 z-50 shadow-md">
-            <div class="flex items-center gap-2.5">
-                <div class="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-xs shadow">🤖</div>
-                <h1 class="font-bold text-sm tracking-wide">Bot Control Panel</h1>
-            </div>
-            <div class="flex items-center gap-2 shrink-0">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span class="text-xs text-emerald-400 font-medium">Online</span>
-            </div>
-        </header>
-
-        <main class="flex-1 p-3 sm:p-6 max-w-4xl mx-auto w-full space-y-5 box-border">
-
-            {% if error_message %}
-            <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs">
-                ⚠️ {{ error_message }}
-            </div>
-            {% endif %}
-
-            <div class="grid grid-cols-3 gap-2.5">
-                <div class="bg-cardBg border border-cardBorder p-3 rounded-xl text-center">
-                    <span class="text-[10px] text-gray-400 uppercase tracking-wider block">Server</span>
-                    <p class="text-base sm:text-lg font-bold text-indigo-400 mt-0.5">{{ servers|length }}</p>
-                </div>
-                <div class="bg-cardBg border border-cardBorder p-3 rounded-xl text-center">
-                    <span class="text-[10px] text-gray-400 uppercase tracking-wider block">Status</span>
-                    <p class="text-base sm:text-lg font-bold text-emerald-400 mt-0.5">Aktiv</p>
-                </div>
-                <div class="bg-cardBg border border-cardBorder p-3 rounded-xl text-center">
-                    <span class="text-[10px] text-gray-400 uppercase tracking-wider block">Ping</span>
-                    <p class="text-base sm:text-lg font-bold text-purple-400 mt-0.5">~14 ms</p>
+        <!-- Linke Seitenleiste (Task/Navigation) -->
+        <aside class="w-full md:w-64 bg-cardBg border-b md:border-b-0 md:border-r border-cardBorder p-4 flex md:flex-col justify-between items-center md:items-stretch shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-sm shadow">🤖</div>
+                <div>
+                    <h1 class="font-bold text-sm">Bot Control</h1>
+                    <span class="text-[10px] text-emerald-400 flex items-center gap-1 mt-0.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Online
+                    </span>
                 </div>
             </div>
+            <nav class="hidden md:flex flex-col gap-1.5 mt-6">
+                <a href="#" class="px-3 py-2 rounded-xl bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold flex items-center gap-2.5">
+                    📊 Server & Rollen
+                </a>
+                <a href="#settings" class="px-3 py-2 rounded-xl text-gray-400 hover:bg-gray-800/50 hover:text-gray-200 text-xs font-medium flex items-center gap-2.5 transition-colors">
+                    ⚙️ Einstellungen
+                </a>
+            </nav>
+            <div class="hidden md:block pt-4 border-t border-cardBorder text-[10px] text-gray-500 text-center">
+                v3.0 Ready
+            </div>
+        </aside>
 
-            <div class="bg-cardBg border border-cardBorder p-4 sm:p-6 rounded-2xl shadow-xl space-y-4">
-                <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center pb-3 border-b border-cardBorder gap-2.5">
-                    <h2 class="text-sm sm:text-base font-bold">Verbundene Server</h2>
-                    <input type="text" id="serverSearch" placeholder="Server suchen..." onkeyup="filterServers()" class="w-full sm:w-52 bg-darkBg border border-cardBorder px-3 py-2 rounded-xl text-xs focus:outline-none focus:border-indigo-500 text-gray-200">
+        <!-- Hauptbereich -->
+        <div class="flex-1 flex flex-col min-w-0">
+            
+            <header class="bg-cardBg border-b border-cardBorder px-4 py-3 flex justify-between items-center sticky top-0 z-50 shadow-md md:hidden">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-xs shadow">🤖</div>
+                    <h2 class="font-bold text-sm tracking-wide">Bot Panel</h2>
                 </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span class="text-xs text-emerald-400 font-medium">Online</span>
+                </div>
+            </header>
 
-                {% if servers %}
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5" id="serverGrid">
-                        {% for server in servers %}
-                            <div class="server-card bg-darkBg border border-cardBorder p-3.5 rounded-xl flex flex-col justify-between gap-3 shadow-sm" data-name="{{ server.name | lower }}">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center font-bold text-indigo-400 overflow-hidden shrink-0">
-                                        {% if server.icon %}
-                                            <img src="https://cdn.discordapp.com/icons/{{ server.id }}/{{ server.icon }}.png" alt="Icon" class="w-full h-full object-cover">
-                                        {% else %}
-                                            {{ server.name[0] }}
-                                        {% endif %}
-                                    </div>
-                                    <div class="min-w-0 flex-1">
-                                        <h4 class="font-bold text-xs truncate" title="{{ server.name }}">{{ server.name }}</h4>
-                                        <p class="text-[11px] text-gray-400 mt-0.5 truncate">Rolle: <span class="text-indigo-300 font-medium">{{ server_roles.get(server.id, 'Keine') }}</span></p>
-                                    </div>
-                                </div>
-                                
-                                <form method="POST" class="flex gap-2">
-                                    <input type="hidden" name="action" value="assign_role">
-                                    <input type="hidden" name="guild_id" value="{{ server.id }}">
-                                    <input type="text" name="role_name" placeholder="Rolle..." required class="flex-1 bg-cardBg border border-cardBorder px-3 py-2 rounded-lg text-xs focus:outline-none focus:border-indigo-500 text-gray-200 min-w-0">
-                                    <button type="submit" class="px-3 py-2 bg-gray-800 hover:bg-gray-700 border border-cardBorder rounded-lg text-xs font-semibold shrink-0">Setzen</button>
-                                </form>
+            <main class="flex-1 p-3 sm:p-6 max-w-4xl w-full space-y-5 box-border mx-auto">
 
-                                <div class="flex gap-2 pt-2 border-t border-cardBorder/60">
-                                    <a href="https://discord.com/channels/{{ server.id }}" target="_blank" class="flex-1 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold text-center transition-colors shadow-sm">
-                                        Join
-                                    </a>
-                                    <form method="POST" class="flex-1" onsubmit="return confirm('Bot wirklich löschen?');">
-                                        <input type="hidden" name="action" value="kick_bot">
-                                        <input type="hidden" name="guild_id" value="{{ server.id }}">
-                                        <button type="submit" class="w-full py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-lg text-xs font-semibold transition-colors">
-                                            Löschen
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs">
-                        Kein Bot-Token aktiv in Railway (`DISCORD_TOKEN`).
-                    </div>
+                {% if error_message %}
+                <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs">
+                    ⚠️ {{ error_message }}
+                </div>
                 {% endif %}
-            </div>
 
-            <div id="settings" class="bg-cardBg border border-cardBorder p-4 sm:p-6 rounded-2xl shadow-xl">
-                <div class="pb-3 border-b border-cardBorder mb-4">
-                    <h2 class="text-sm sm:text-base font-bold">Bot-Einstellungen</h2>
+                <div class="grid grid-cols-3 gap-2.5">
+                    <div class="bg-cardBg border border-cardBorder p-3 rounded-xl text-center">
+                        <span class="text-[10px] text-gray-400 uppercase tracking-wider block">Server</span>
+                        <p class="text-base sm:text-lg font-bold text-indigo-400 mt-0.5">{{ servers|length }}</p>
+                    </div>
+                    <div class="bg-cardBg border border-cardBorder p-3 rounded-xl text-center">
+                        <span class="text-[10px] text-gray-400 uppercase tracking-wider block">Status</span>
+                        <p class="text-base sm:text-lg font-bold text-emerald-400 mt-0.5">Aktiv</p>
+                    </div>
+                    <div class="bg-cardBg border border-cardBorder p-3 rounded-xl text-center">
+                        <span class="text-[10px] text-gray-400 uppercase tracking-wider block">Ping</span>
+                        <p class="text-base sm:text-lg font-bold text-purple-400 mt-0.5">~14 ms</p>
+                    </div>
                 </div>
-                <form method="POST" class="space-y-3.5">
-                    <input type="hidden" name="action" value="save_settings">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-400 mb-1">Bot-Präfix</label>
-                        <input type="text" name="prefix" value="{{ settings.prefix }}" class="w-full bg-darkBg border border-cardBorder px-3 py-2.5 rounded-xl text-xs focus:outline-none focus:border-indigo-500 text-gray-200">
+
+                <div class="bg-cardBg border border-cardBorder p-4 sm:p-6 rounded-2xl shadow-xl space-y-4">
+                    <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center pb-3 border-b border-cardBorder gap-2.5">
+                        <h2 class="text-sm sm:text-base font-bold">Verbundene Server</h2>
+                        <input type="text" id="serverSearch" placeholder="Server suchen..." onkeyup="filterServers()" class="w-full sm:w-52 bg-darkBg border border-cardBorder px-3 py-2 rounded-xl text-xs focus:outline-none focus:border-indigo-500 text-gray-200">
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-400 mb-1">Standard-Rolle</label>
-                        <input type="text" name="default_role" value="{{ settings.default_role }}" class="w-full bg-darkBg border border-cardBorder px-3 py-2.5 rounded-xl text-xs focus:outline-none focus:border-indigo-500 text-gray-200">
+
+                    {% if servers %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5" id="serverGrid">
+                            {% for server in servers %}
+                                <div class="server-card bg-darkBg border border-cardBorder p-3.5 rounded-xl flex flex-col justify-between gap-3 shadow-sm" data-name="{{ server.name | lower }}">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center font-bold text-indigo-400 overflow-hidden shrink-0">
+                                            {% if server.icon %}
+                                                <img src="https://cdn.discordapp.com/icons/{{ server.id }}/{{ server.icon }}.png" alt="Icon" class="w-full h-full object-cover">
+                                            {% else %}
+                                                {{ server.name[0] }}
+                                            {% endif %}
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <h4 class="font-bold text-xs truncate" title="{{ server.name }}">{{ server.name }}</h4>
+                                            <p class="text-[11px] text-gray-400 mt-0.5 truncate">Rolle: <span class="text-indigo-300 font-medium">{{ server_roles.get(server.id, 'Keine') }}</span></p>
+                                        </div>
+                                    </div>
+                                    
+                                    <form method="POST" class="flex gap-2">
+                                        <input type="hidden" name="action" value="assign_role">
+                                        <input type="hidden" name="guild_id" value="{{ server.id }}">
+                                        <input type="text" name="role_name" placeholder="Rolle..." required class="flex-1 bg-cardBg border border-cardBorder px-3 py-2 rounded-lg text-xs focus:outline-none focus:border-indigo-500 text-gray-200 min-w-0">
+                                        <button type="submit" class="px-3 py-2 bg-gray-800 hover:bg-gray-700 border border-cardBorder rounded-lg text-xs font-semibold shrink-0">Setzen</button>
+                                    </form>
+
+                                    <div class="flex gap-2 pt-2 border-t border-cardBorder/60">
+                                        <a href="https://discord.com/channels/{{ server.id }}" target="_blank" class="flex-1 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold text-center transition-colors shadow-sm">
+                                            Join
+                                        </a>
+                                        <form method="POST" class="flex-1" onsubmit="return confirm('Bot wirklich löschen?');">
+                                            <input type="hidden" name="action" value="kick_bot">
+                                            <input type="hidden" name="guild_id" value="{{ server.id }}">
+                                            <button type="submit" class="w-full py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-lg text-xs font-semibold transition-colors">
+                                                Löschen
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs">
+                            Kein Bot-Token aktiv in Railway (`DISCORD_TOKEN`).
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div id="settings" class="bg-cardBg border border-cardBorder p-4 sm:p-6 rounded-2xl shadow-xl">
+                    <div class="pb-3 border-b border-cardBorder mb-4">
+                        <h2 class="text-sm sm:text-base font-bold">Bot-Einstellungen</h2>
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-400 mb-1">Log-Channel</label>
-                        <input type="text" name="log_channel" value="{{ settings.log_channel }}" class="w-full bg-darkBg border border-cardBorder px-3 py-2.5 rounded-xl text-xs focus:outline-none focus:border-indigo-500 text-gray-200">
-                    </div>
-                    <button type="submit" class="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-lg transition-colors">
-                        Speichern
-                    </button>
-                </form>
-            </div>
-        </main>
+                    <form method="POST" class="space-y-3.5">
+                        <input type="hidden" name="action" value="save_settings">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-400 mb-1">Bot-Präfix</label>
+                            <input type="text" name="prefix" value="{{ settings.prefix }}" class="w-full bg-darkBg border border-cardBorder px-3 py-2.5 rounded-xl text-xs focus:outline-none focus:border-indigo-500 text-gray-200">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-400 mb-1">Standard-Rolle</label>
+                            <input type="text" name="default_role" value="{{ settings.default_role }}" class="w-full bg-darkBg border border-cardBorder px-3 py-2.5 rounded-xl text-xs focus:outline-none focus:border-indigo-500 text-gray-200">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-400 mb-1">Log-Channel</label>
+                            <input type="text" name="log_channel" value="{{ settings.log_channel }}" class="w-full bg-darkBg border border-cardBorder px-3 py-2.5 rounded-xl text-xs focus:outline-none focus:border-indigo-500 text-gray-200">
+                        </div>
+                        <button type="submit" class="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-lg transition-colors">
+                            Speichern
+                        </button>
+                    </form>
+                </div>
+            </main>
+        </div>
 
         <script>
             function filterServers() {
