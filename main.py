@@ -3,9 +3,24 @@ from discord.ext import commands
 from discord.ui import Button, View, Modal, TextInput
 import asyncio
 import os
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import threading
 
-# TRAGE HIER DEINE ID EIN:
-OWNER_ID = 1523728380476919910 
+# --- MINI-WEBSERVER FÜR RENDER (Damit der Web Service nicht abbricht) ---
+class DummyHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Bot is alive!")
+
+def run_web_server():
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(("0.0.0.0", port), DummyHandler)
+    server.serve_forever()
+
+# Startet den Webserver im Hintergrund, während der Bot läuft
+threading.Thread(target=run_web_server, daemon=True).start()
+# -----------------------------------------------------------------------
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -24,9 +39,11 @@ class BewerbungsModal(Modal, title="Bewerbungsformular"):
         guild = interaction.guild
         category = discord.utils.get(guild.categories, name="Bewerbungen") or await guild.create_category("Bewerbungen")
         
-        overwrites = {guild.default_role: discord.PermissionOverwrite(read_messages=False), 
-                      interaction.user: discord.PermissionOverwrite(read_messages=True),
-                      guild.me: discord.PermissionOverwrite(read_messages=True)}
+        overwrites = {
+            guild.default_role: discord.PermissionOverwrite(read_messages=False), 
+            interaction.user: discord.PermissionOverwrite(read_messages=True),
+            guild.me: discord.PermissionOverwrite(read_messages=True)
+        }
         
         channel = await guild.create_text_channel(name=f"bewerbung-{interaction.user.name}", category=category, overwrites=overwrites)
         
@@ -35,28 +52,25 @@ class BewerbungsModal(Modal, title="Bewerbungsformular"):
         embed.add_field(name="Erfahrungen", value=self.frage2.value, inline=False)
         embed.add_field(name="Warum", value=self.frage3.value, inline=False)
         
-        await channel.send(embed=embed, view=TicketActionView(interaction.user.id))
+        await channel.send(embed=embed, view=TicketActionView())
 
 class TicketActionView(View):
-    def __init__(self, target_id):
+    def __init__(self):
         super().__init__(timeout=None)
-        self.target_id = target_id
 
     @discord.ui.button(label="Annehmen", style=discord.ButtonStyle.green)
     async def accept(self, interaction: discord.Interaction, button: Button):
-        if interaction.user.id != OWNER_ID:
-            return await interaction.response.send_message("Nur der Inhaber!", ephemeral=True)
         await interaction.response.send_message("Angenommen! Ticket schließt sich...", ephemeral=True)
         await asyncio.sleep(2)
-        await interaction.channel.delete()
+        channel = interaction.channel
+        await channel.delete()
 
     @discord.ui.button(label="Ablehnen", style=discord.ButtonStyle.red)
     async def deny(self, interaction: discord.Interaction, button: Button):
-        if interaction.user.id != OWNER_ID:
-            return await interaction.response.send_message("Nur der Inhaber!", ephemeral=True)
         await interaction.response.send_message("Abgelehnt! Ticket schließt sich...", ephemeral=True)
         await asyncio.sleep(2)
-        await interaction.channel.delete()
+        channel = interaction.channel
+        await channel.delete()
 
 class BewerungsStartView(View):
     def __init__(self):
