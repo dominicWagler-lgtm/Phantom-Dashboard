@@ -1,25 +1,28 @@
 import os
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import threading
-
-# --- SOFORTIGES PORT-BINDING FÜR RENDER ---
-class DummyHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b"Bot is online!")
-    def log_message(self, format, *args):
-        pass
-
-port = int(os.environ.get("PORT", 10000))
-server = HTTPServer(("0.0.0.0", port), DummyHandler)
-threading.Thread(target=server.serve_forever, daemon=True).start()
-# ------------------------------------------
-
 import discord
 from discord.ext import commands
 from discord.ui import Button, View, Modal, TextInput
 import asyncio
+
+# --- SCHNELLER WEB-SERVER (Nicht-blockierend für Render) ---
+class SimpleHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Bot is running!")
+    def log_message(self, format, *args):
+        pass
+
+def start_server():
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(("0.0.0.0", port), SimpleHandler)
+    server.serve_forever()
+
+# Startet den Server sofort im Hintergrund
+threading.Thread(target=start_server, daemon=True).start()
+# ------------------------------------------------------------
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -61,15 +64,13 @@ class TicketActionView(View):
     async def accept(self, interaction: discord.Interaction, button: Button):
         await interaction.response.send_message("Angenommen! Ticket schließt sich...", ephemeral=True)
         await asyncio.sleep(2)
-        channel = interaction.channel
-        await channel.delete()
+        await interaction.channel.delete()
 
     @discord.ui.button(label="Ablehnen", style=discord.ButtonStyle.red)
     async def deny(self, interaction: discord.Interaction, button: Button):
         await interaction.response.send_message("Abgelehnt! Ticket schließt sich...", ephemeral=True)
         await asyncio.sleep(2)
-        channel = interaction.channel
-        await channel.delete()
+        await interaction.channel.delete()
 
 class BewerungsStartView(View):
     def __init__(self):
@@ -88,4 +89,8 @@ async def ticket(interaction: discord.Interaction):
     await interaction.channel.send("Klicke unten für die Bewerbung:", view=BewerungsStartView())
     await interaction.response.send_message("Panel gesendet!", ephemeral=True)
 
-bot.run(os.getenv("TOKEN"))
+token = os.getenv("TOKEN")
+if token:
+    bot.run(token)
+else:
+    print("FEHLER: Kein Token gefunden!")
