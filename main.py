@@ -42,6 +42,8 @@ class BewerbungsModal(Modal, title="Bewerbungsformular"):
     )
 
     async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.send_message("Deine Bewerbung wird verarbeitet und dein privates Ticket wird erstellt...", ephemeral=True)
+        
         guild = interaction.guild
         category = discord.utils.get(guild.categories, name="Bewerbungen")
         if not category:
@@ -69,7 +71,6 @@ class BewerbungsModal(Modal, title="Bewerbungsformular"):
 
         view = TicketActionView(interaction.user.id)
         await channel.send(content=f"{interaction.user.mention} hat sich beworben!", embed=embed, view=view)
-        await interaction.response.send_message(f"Deine Bewerbung wurde eingereicht! Siehe dein Ticket: {channel.mention}", ephemeral=True)
 
 
 # Buttons für Annehmen und Ablehnen im Ticket
@@ -161,6 +162,6 @@ async def ticket(interaction: discord.Interaction):
 # Bot über die Render-Umgebungsvariable starten
 token = os.getenv("TOKEN")
 if not token:
-    print("FEHLER: Kein Token gefunden! Bitte bei Render in den Environment-Variablen den Key 'TOKEN' anlegen.")
+    print("FEHLER: Kein Token gefunden!")
 else:
     bot.run(token)
