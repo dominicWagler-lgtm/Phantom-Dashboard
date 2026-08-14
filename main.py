@@ -6,7 +6,7 @@ from discord.ext import commands
 from discord.ui import Button, View, Modal, TextInput
 import asyncio
 
-# --- SCHNELLER WEB-SERVER (Nicht-blockierend für Render) ---
+# --- SCHNELLER WEB-SERVER FÜR RENDER (Lässt den Bot online) ---
 class SimpleHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -20,9 +20,12 @@ def start_server():
     server = HTTPServer(("0.0.0.0", port), SimpleHandler)
     server.serve_forever()
 
-# Startet den Server sofort im Hintergrund
 threading.Thread(target=start_server, daemon=True).start()
 # ------------------------------------------------------------
+
+# DEINE ROLLEN-IDS (Hier eingetragen)
+ROLLE_1_ID = 153790247117783592
+ROLLE_2_ID = 1537853690076200980
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -49,28 +52,77 @@ class BewerbungsModal(Modal, title="Bewerbungsformular"):
         
         channel = await guild.create_text_channel(name=f"bewerbung-{interaction.user.name}", category=category, overwrites=overwrites)
         
-        embed = discord.Embed(title=f"Bewerbung von {interaction.user.name}")
+        embed = discord.Embed(title=f"Bewerbung von {interaction.user.name}", color=discord.Color.blue())
         embed.add_field(name="Alter", value=self.frage1.value, inline=False)
         embed.add_field(name="Erfahrungen", value=self.frage2.value, inline=False)
         embed.add_field(name="Warum", value=self.frage3.value, inline=False)
         
-        await channel.send(embed=embed, view=TicketActionView())
+        # Übergibt die ID des Bewerbers an die Buttons
+        await channel.send(embed=embed, view=TicketActionView(interaction.user.id))
 
 class TicketActionView(View):
-    def __init__(self):
+    def __init__(self, target_id: int):
         super().__init__(timeout=None)
+        self.target_id = target_id
 
     @discord.ui.button(label="Annehmen", style=discord.ButtonStyle.green)
     async def accept(self, interaction: discord.Interaction, button: Button):
-        await interaction.response.send_message("Angenommen! Ticket schließt sich...", ephemeral=True)
+        guild = interaction.guild
+        member = guild.get_member(self.target_id)
+        if not member:
+            try:
+                member = await guild.fetch_member(self.target_id)
+            except:
+                member = None
+
+        # Rollen vergeben
+        if member:
+            try:
+                role1 = guild.get_role(ROLLE_1_ID)
+                role2 = guild.get_role(ROLLE_2_ID)
+                if role1: 
+                    await member.add_roles(role1)
+                if role2: 
+                    await member.add_roles(role2)
+            except Exception as e:
+                print(f"Fehler beim Rollen geben: {e}")
+
+            # DM senden
+            try:
+                await member.send("🎉 Herzlichen Glückwunsch! Deine Bewerbung wurde **angenommen**.")
+            except:
+                pass
+
+        await interaction.response.send_message("Angenommen! Rollen vergeben und DM gesendet. Ticket schließt sich...", ephemeral=True)
         await asyncio.sleep(2)
-        await interaction.channel.delete()
+        try:
+            await interaction.channel.delete()
+        except:
+            pass
 
     @discord.ui.button(label="Ablehnen", style=discord.ButtonStyle.red)
     async def deny(self, interaction: discord.Interaction, button: Button):
-        await interaction.response.send_message("Abgelehnt! Ticket schließt sich...", ephemeral=True)
+        guild = interaction.guild
+        member = guild.get_member(self.target_id)
+        if not member:
+            try:
+                member = await guild.fetch_member(self.target_id)
+            except:
+                member = None
+
+        # DM senden
+        if member:
+            try:
+                await member.send("❌ Leider wurde deine Bewerbung **abgelehnt**.")
+            except:
+                pass
+
+        await interaction.response.send_message("Abgelehnt! DM gesendet. Ticket schließt sich...", ephemeral=True)
         await asyncio.sleep(2)
-        await interaction.channel.delete()
+        try:
+            await interaction.channel.delete()
+        except:
+            pass
 
 class BewerungsStartView(View):
     def __init__(self):
