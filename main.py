@@ -5,7 +5,8 @@ import asyncio
 import os
 
 # ==================== EINSTELLUNGEN ====================
-OWNER_ID = 1523728380476919910            # <-- HIER DEINE DISCORD ID EINTRAGEN!
+OWNER_ID = interaction.user.id
+            # <-- HIER DEINE DISCORD ID EINTRAGEN!
 ROLLE_1_ID = 1537902471177838592                           # ID der Rolle beim Annehmen (oder 0 lassen)
 ROLLE_2_ID = 1537853690076200980                           # Zweite Rolle (optional, sonst 0)
 # =======================================================
