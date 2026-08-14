@@ -1,306 +1,164 @@
 import os
-import requests
-from flask import Flask, render_template_string, request, redirect, url_for
+import discord
+from discord import app_commands
+from discord.ui import Button, View, Modal, TextInput
+import asyncio
 
-app = Flask(__name__)
+# --- HIER BITTE ANPASSEN (NUR ZAHLEN) ---
+OWNER_ID = 1537902770034577522     # Deine Discord User-ID
+ROLLE_1_ID = 1537902471177838592    # Erste Rolle nach Annahme
+ROLLE_2_ID = 1537853690076200980    # Zweite Rolle nach Annahme
+TICKET_KATEGORIE_ID = 0            # Kategorie-ID (0 lassen, wenn keine gewünscht)
 
-bot_settings = {
-    "prefix": "/",
-    "default_role": "Mitglied",
-    "log_channel": "#bot-logs"
-}
+intents = discord.Intents.default()
+intents.guilds = True
+intents.guild_messages = True
+intents.message_content = True
+intents.members = True
 
-server_roles = {}
+client = discord.Client(intents=intents)
+tree = app_commands.CommandTree(client)
 
-@app.route("/", methods=["GET", "POST"])
-def index():
-    error_message = None
-    
-    if request.method == "POST":
-        action = request.form.get("action")
+# Bewerbungs-Formular (Modal)
+class ApplicationModal(Modal, title="Bewerbungsformular"):
+    age = TextInput(
+        label='Wie alt bist du? (z.B. 16 oder älter)',
+        style=discord.TextStyle.short,
+        required=True
+    )
+    experience = TextInput(
+        label='Welche Erfahrungen hast du?',
+        style=discord.TextStyle.paragraph,
+        required=True
+    )
+    why_you = TextInput(
+        label='Warum sollten wir dich nehmen?',
+        style=discord.TextStyle.paragraph,
+        required=True
+    )
+
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.send_message("Deine Bewerbung wird verarbeitet und dein privates Ticket wird erstellt...", ephemeral=True)
+
+        guild = interaction.guild
+        user = interaction.user
+
+        category = guild.get_channel(TICKET_KATEGORIE_ID) if TICKET_KATEGORIE_ID != 0 else None
+        owner_member = guild.get_member(OWNER_ID)
+
+        # Berechtigungen: Nur der Bewerber, der Owner und der Bot haben Zugriff
+        overwrites = {
+            guild.default_role: discord.PermissionOverwrite(view_channel=False),
+            user: discord.PermissionOverwrite(view_channel=True, send_messages=True, read_message_history=True),
+        }
+        if owner_member:
+            overwrites[owner_member] = discord.PermissionOverwrite(view_channel=True, send_messages=True, read_message_history=True)
+
+        # Ticket-Kanal erstellen
+        ticket_channel = await guild.create_text_channel(
+            name=f"bewerbung-{user.name}",
+            category=category,
+            overwrites=overwrites
+        )
+
+        # Embed mit den Antworten
+        embed = discord.Embed(
+            title=f"🎫 Neue Bewerbung von {user.name}",
+            color=discord.Color.blurple()
+        )
+        embed.add_field(name="Alter / Angaben", value=self.age.value, inline=False)
+        embed.add_field(name="Erfahrungen", value=self.experience.value, inline=False)
+        embed.add_field(name="Warum wir?", value=self.why_you.value, inline=False)
+
+        view = TicketActionView(user.id)
+        owner_mention = f"<@{OWNER_ID}>" if OWNER_ID else ""
         
-        if action == "save_settings":
-            bot_settings["prefix"] = request.form.get("prefix", "/")
-            bot_settings["default_role"] = request.form.get("default_role", "Mitglied")
-            bot_settings["log_channel"] = request.form.get("log_channel", "#bot-logs")
-            return redirect(url_for("index"))
-            
-        elif action == "kick_bot":
-            guild_id = request.form.get("guild_id")
-            bot_token = os.environ.get("DISCORD_TOKEN")
-            if bot_token and guild_id:
-                headers = {"Authorization": f"Bot {bot_token}"}
-                res = requests.delete(f"https://discord.com/api/v10/users/@me/guilds/{guild_id}", headers=headers)
-                if res.status_code != 204:
-                    error_message = "Fehler beim Entfernen des Bots."
-            return redirect(url_for("index"))
+        await ticket_channel.send(
+            content=f"{owner_mention} Neue Bewerbung eingetroffen!",
+            embed=embed,
+            view=view
+        )
 
-        elif action == "assign_role":
-            guild_id = request.form.get("guild_id")
-            role_name = request.form.get("role_name")
-            if guild_id and role_name:
-                server_roles[guild_id] = role_name
-            return redirect(url_for("index"))
+# Ansicht für die Annehmen/Ablehnen-Buttons im Ticket
+class TicketActionView(View):
+    def __init__(self, target_user_id: int):
+        super().__init__(timeout=None)
+        self.target_user_id = target_user_id
 
-    bot_token = os.environ.get("DISCORD_TOKEN")
-    servers = []
+    @discord.ui.button(label="Annehmen", style=discord.ButtonStyle.green, emoji="✅")
+    async def accept_button(self, interaction: discord.Interaction, button: Button):
+        if interaction.user.id != OWNER_ID:
+            await interaction.response.send_message("Nur der Server-Inhaber darf das tun!", ephemeral=True)
+            return
+
+        guild = interaction.guild
+        member = guild.get_member(self.target_user_id)
+        channel = interaction.channel
+
+        if member:
+            try:
+                role1 = guild.get_role(ROLLE_1_ID)
+                role2 = guild.get_role(ROLLE_2_ID)
+                if role1: await member.add_roles(role1)
+                if role2: await member.add_roles(role2)
+            except Exception as e:
+                print(f"Fehler beim Rollen vergeben: {e}")
+
+            try:
+                await member.send("🎉 Herzlichen Glückwunsch! Deine Bewerbung wurde **angenommen**.")
+            except:
+                pass
+
+        await interaction.response.send_message("Bewerbung wurde **angenommen**. Ticket wird geschlossen...", ephemeral=True)
+        await asyncio.sleep(3)
+        await channel.delete()
+
+    @discord.ui.button(label="Ablehnen", style=discord.ButtonStyle.red, emoji="❌")
+    async def deny_button(self, interaction: discord.Interaction, button: Button):
+        if interaction.user.id != OWNER_ID:
+            await interaction.response.send_message("Nur der Server-Inhaber darf das tun!", ephemeral=True)
+            return
+
+        guild = interaction.guild
+        member = guild.get_member(self.target_user_id)
+        channel = interaction.channel
+
+        if member:
+            try:
+                await member.send("❌ Leider wurde deine Bewerbung **abgelehnt**.")
+            except:
+                pass
+
+        await interaction.response.send_message("Bewerbung wurde **abgelehnt**. Ticket wird geschlossen...", ephemeral=True)
+        await asyncio.sleep(3)
+        await channel.delete()
+
+# Slash Command /ticket
+@tree.command(name="ticket", description="Öffnet das Bewerbungs-Ticket-Panel")
+async def ticket_command(interaction: discord.Interaction):
+    embed = discord.Embed(
+        title="🎫 Bewerbungs-Panel",
+        description="Klicke auf den Button unten, um das Bewerbungsformular auszufüllen.\n\n*Das Ticket ist nach dem Absenden streng vertraulich und nur für dich und den Owner sichtbar!*",
+        color=discord.Color.green()
+    )
     
-    if bot_token:
-        headers = {"Authorization": f"Bot {bot_token}"}
-        try:
-            response = requests.get("https://discord.com/api/v10/users/@me/guilds", headers=headers, timeout=5)
-            if response.status_code == 200:
-                servers = response.json()
-            else:
-                error_message = "Ungültiger Bot-Token."
-        except Exception:
-            error_message = "API-Verbindungsfehler."
+    view = View(timeout=None)
+    button = Button(label="Bewerbung abschicken", style=discord.ButtonStyle.primary, emoji="📝", custom_id="open_application_modal")
+    
+    async def button_callback(interaction: discord.Interaction):
+        await interaction.response.send_modal(ApplicationModal())
+        
+    button.callback = button_callback
+    view.add_item(button)
+    
+    await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
-    html_content = """
-    <!DOCTYPE html>
-    <html lang="de" class="dark">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-        <title>Bot Control Panel</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-        <style>
-            @keyframes rotate-border {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-            }
-            .modern-glow-btn {
-                position: relative;
-                border-radius: 1rem;
-                overflow: hidden;
-                padding: 1.5px;
-                isolation: isolate;
-            }
-            .modern-glow-btn::before {
-                content: '';
-                position: absolute;
-                inset: -50%;
-                background: conic-gradient(from 0deg, transparent 0deg, transparent 60deg, #3b82f6 140deg, #ffffff 180deg, #3b82f6 220deg, transparent 300deg, transparent 360deg);
-                animation: rotate-border 3.5s linear infinite;
-                z-index: -1;
-            }
-            .modern-glow-content {
-                background: #000000;
-                border-radius: calc(1rem - 1.5px);
-                transition: background 0.2s ease;
-            }
-            .modern-glow-btn:hover .modern-glow-content {
-                background: #090d16;
-            }
-        </style>
-        <script>
-            tailwind.config = {
-                darkMode: 'class',
-                theme: {
-                    extend: {
-                        colors: {
-                            darkBg: '#0b0f19',
-                            cardBg: '#121622',
-                            cardBorder: '#1e263d',
-                            accent: '#6366f1',
-                            accentHover: '#4f46e5'
-                        }
-                    }
-                }
-            }
-        </script>
-    </head>
-    <body class="bg-darkBg text-gray-100 font-sans antialiased min-h-screen flex flex-col overflow-x-hidden">
+@client.event
+async def on_ready():
+    await tree.sync()
+    print(f"Eingeloggt als {client.user}!")
 
-        <!-- Top-Header mit Hamburger-Menü Button (3 Striche) -->
-        <header class="bg-cardBg border-b border-cardBorder px-4 py-3.5 flex justify-between items-center sticky top-0 z-50 shadow-md">
-            <div class="flex items-center gap-3.5">
-                <button onclick="toggleSidebar()" class="w-10 h-10 rounded-xl bg-darkBg border border-cardBorder flex flex-col justify-center items-center gap-1 focus:outline-none hover:border-indigo-500 transition-all shadow-sm active:scale-95">
-                    <span class="w-4 h-0.5 bg-gray-200 rounded-full"></span>
-                    <span class="w-4 h-0.5 bg-gray-200 rounded-full"></span>
-                    <span class="w-4 h-0.5 bg-gray-200 rounded-full"></span>
-                </button>
-                <div class="flex items-center gap-2.5">
-                    <div class="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-xs shadow">🤖</div>
-                    <h1 class="font-bold text-sm tracking-wide">Bot Control Panel</h1>
-                </div>
-            </div>
-            <div class="flex items-center gap-2 shrink-0 bg-darkBg border border-cardBorder px-2.5 py-1 rounded-full">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span class="text-[11px] text-emerald-400 font-medium">Online</span>
-            </div>
-        </header>
-
-        <!-- Overlay -->
-        <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden transition-opacity"></div>
-
-        <!-- Ausklappbares Seiten-Menü (Drawer) -->
-        <aside id="sidebar" class="fixed top-0 left-0 bottom-0 w-80 bg-cardBg border-r border-cardBorder z-50 transform -translate-x-full transition-transform duration-300 ease-in-out p-5 flex flex-col justify-between shadow-2xl">
-            <div>
-                <div class="flex justify-between items-center pb-4 border-b border-cardBorder mb-6">
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-sm shadow">🤖</div>
-                        <h2 class="font-bold text-sm tracking-wide text-white">Menü</h2>
-                    </div>
-                    <button onclick="toggleSidebar()" class="w-8 h-8 rounded-lg bg-darkBg border border-cardBorder text-gray-400 hover:text-white flex items-center justify-center text-sm transition-colors">✕</button>
-                </div>
-
-                <!-- Modern gestaltete Menü-Buttons mit fließendem blau-weißem Rand & schwarzem Inhalt -->
-                <nav class="flex flex-col gap-3.5">
-                    <div class="modern-glow-btn shadow-xl">
-                        <a href="#" onclick="toggleSidebar()" class="modern-glow-content px-4 py-3 flex items-center gap-3 text-xs font-bold text-white block">
-                            <span class="text-base">📊</span> Dashboard & Server
-                        </a>
-                    </div>
-
-                    <div class="modern-glow-btn shadow-xl">
-                        <a href="#settings" onclick="toggleSidebar()" class="modern-glow-content px-4 py-3 flex items-center gap-3 text-xs font-bold text-white block">
-                            <span class="text-base">⚙️</span> Bot-Einstellungen
-                        </a>
-                    </div>
-
-                    <div class="modern-glow-btn shadow-xl">
-                        <a href="#serverSearch" onclick="toggleSidebar()" class="modern-glow-content px-4 py-3 flex items-center gap-3 text-xs font-bold text-white block">
-                            <span class="text-base">🔍</span> Server Suchen
-                        </a>
-                    </div>
-                </nav>
-            </div>
-
-            <div class="pt-4 border-t border-cardBorder text-[11px] text-gray-500 text-center font-medium">
-                v3.3 Ultra Modern
-            </div>
-        </aside>
-
-        <!-- Hauptbereich -->
-        <main class="flex-1 p-3 sm:p-6 max-w-4xl mx-auto w-full space-y-5 box-border">
-
-            {% if error_message %}
-            <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs">
-                ⚠️ {{ error_message }}
-            </div>
-            {% endif %}
-
-            <div class="grid grid-cols-3 gap-2.5">
-                <div class="bg-cardBg border border-cardBorder p-3 rounded-xl text-center shadow-sm">
-                    <span class="text-[10px] text-gray-400 uppercase tracking-wider block">Server</span>
-                    <p class="text-base sm:text-lg font-bold text-indigo-400 mt-0.5">{{ servers|length }}</p>
-                </div>
-                <div class="bg-cardBg border border-cardBorder p-3 rounded-xl text-center shadow-sm">
-                    <span class="text-[10px] text-gray-400 uppercase tracking-wider block">Status</span>
-                    <p class="text-base sm:text-lg font-bold text-emerald-400 mt-0.5">Aktiv</p>
-                </div>
-                <div class="bg-cardBg border border-cardBorder p-3 rounded-xl text-center shadow-sm">
-                    <span class="text-[10px] text-gray-400 uppercase tracking-wider block">Ping</span>
-                    <p class="text-base sm:text-lg font-bold text-purple-400 mt-0.5">~14 ms</p>
-                </div>
-            </div>
-
-            <div class="bg-cardBg border border-cardBorder p-4 sm:p-6 rounded-2xl shadow-xl space-y-4">
-                <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center pb-3 border-b border-cardBorder gap-2.5">
-                    <h2 class="text-sm sm:text-base font-bold">Verbundene Server</h2>
-                    <input type="text" id="serverSearch" placeholder="Server suchen..." onkeyup="filterServers()" class="w-full sm:w-52 bg-darkBg border border-cardBorder px-3 py-2 rounded-xl text-xs focus:outline-none focus:border-indigo-500 text-gray-200">
-                </div>
-
-                {% if servers %}
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5" id="serverGrid">
-                        {% for server in servers %}
-                            <div class="server-card bg-darkBg border border-cardBorder p-3.5 rounded-xl flex flex-col justify-between gap-3 shadow-sm" data-name="{{ server.name | lower }}">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center font-bold text-indigo-400 overflow-hidden shrink-0">
-                                        {% if server.icon %}
-                                            <img src="https://cdn.discordapp.com/icons/{{ server.id }}/{{ server.icon }}.png" alt="Icon" class="w-full h-full object-cover">
-                                        {% else %}
-                                            {{ server.name[0] }}
-                                        {% endif %}
-                                    </div>
-                                    <div class="min-w-0 flex-1">
-                                        <h4 class="font-bold text-xs truncate" title="{{ server.name }}">{{ server.name }}</h4>
-                                        <p class="text-[11px] text-gray-400 mt-0.5 truncate">Rolle: <span class="text-indigo-300 font-medium">{{ server_roles.get(server.id, 'Keine') }}</span></p>
-                                    </div>
-                                </div>
-                                
-                                <form method="POST" class="flex gap-2">
-                                    <input type="hidden" name="action" value="assign_role">
-                                    <input type="hidden" name="guild_id" value="{{ server.id }}">
-                                    <input type="text" name="role_name" placeholder="Rolle..." required class="flex-1 bg-cardBg border border-cardBorder px-3 py-2 rounded-lg text-xs focus:outline-none focus:border-indigo-500 text-gray-200 min-w-0">
-                                    <button type="submit" class="px-3 py-2 bg-gray-800 hover:bg-gray-700 border border-cardBorder rounded-lg text-xs font-semibold shrink-0">Setzen</button>
-                                </form>
-
-                                <div class="flex gap-2 pt-2 border-t border-cardBorder/60">
-                                    <a href="https://discord.com/channels/{{ server.id }}" target="_blank" class="flex-1 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold text-center transition-colors shadow-sm">
-                                        Join
-                                    </a>
-                                    <form method="POST" class="flex-1" onsubmit="return confirm('Bot wirklich löschen?');">
-                                        <input type="hidden" name="action" value="kick_bot">
-                                        <input type="hidden" name="guild_id" value="{{ server.id }}">
-                                        <button type="submit" class="w-full py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-lg text-xs font-semibold transition-colors">
-                                            Löschen
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs">
-                        Kein Bot-Token aktiv in Railway (`DISCORD_TOKEN`).
-                    </div>
-                {% endif %}
-            </div>
-
-            <div id="settings" class="bg-cardBg border border-cardBorder p-4 sm:p-6 rounded-2xl shadow-xl">
-                <div class="pb-3 border-b border-cardBorder mb-4">
-                    <h2 class="text-sm sm:text-base font-bold">Bot-Einstellungen</h2>
-                </div>
-                <form method="POST" class="space-y-3.5">
-                    <input type="hidden" name="action" value="save_settings">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-400 mb-1">Bot-Präfix</label>
-                        <input type="text" name="prefix" value="{{ settings.prefix }}" class="w-full bg-darkBg border border-cardBorder px-3 py-2.5 rounded-xl text-xs focus:outline-none focus:border-indigo-500 text-gray-200">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-400 mb-1">Standard-Rolle</label>
-                        <input type="text" name="default_role" value="{{ settings.default_role }}" class="w-full bg-darkBg border border-cardBorder px-3 py-2.5 rounded-xl text-xs focus:outline-none focus:border-indigo-500 text-gray-200">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-400 mb-1">Log-Channel</label>
-                        <input type="text" name="log_channel" value="{{ settings.log_channel }}" class="w-full bg-darkBg border border-cardBorder px-3 py-2.5 rounded-xl text-xs focus:outline-none focus:border-indigo-500 text-gray-200">
-                    </div>
-                    <button type="submit" class="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-lg transition-colors">
-                        Speichern
-                    </button>
-                </form>
-            </div>
-        </main>
-
-        <script>
-            function toggleSidebar() {
-                const sidebar = document.getElementById('sidebar');
-                const overlay = document.getElementById('sidebarOverlay');
-                if (sidebar.classList.contains('-translate-x-full')) {
-                    sidebar.classList.remove('-translate-x-full');
-                    overlay.classList.remove('hidden');
-                } else {
-                    sidebar.classList.add('-translate-x-full');
-                    overlay.classList.add('hidden');
-                }
-            }
-
-            function filterServers() {
-                let input = document.getElementById('serverSearch').value.toLowerCase();
-                let cards = document.getElementsByClassName('server-card');
-                for (let i = 0; i < cards.length; i++) {
-                    let name = cards[i].getAttribute('data-name');
-                    cards[i].style.display = name.includes(input) ? "" : "none";
-                }
-            }
-        </script>
-    </body>
-    </html>
-    """
-    return render_template_string(html_content, servers=servers, settings=bot_settings, server_roles=server_roles, error_message=error_message)
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+# Bot über die Render-Umgebungsvariable starten
+TOKEN = os.getenv("TOKEN")
+client.run(TOKEN)
+             
