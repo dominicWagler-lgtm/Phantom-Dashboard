@@ -4,13 +4,6 @@ from discord.ui import Button, View, Modal, TextInput
 import asyncio
 import os
 
-# ==================== EINSTELLUNGEN ====================
-OWNER_ID = interaction.user.id
-            # <-- HIER DEINE DISCORD ID EINTRAGEN!
-ROLLE_1_ID = 1537902471177838592                           # ID der Rolle beim Annehmen (oder 0 lassen)
-ROLLE_2_ID = 1537853690076200980                           # Zweite Rolle (optional, sonst 0)
-# =======================================================
-
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
@@ -21,29 +14,29 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 # Modal für das Bewerbungsformular
 class BewerbungsModal(Modal, title="Bewerbungsformular"):
     frage1 = TextInput(
-        label="1. Wie alt bist du?",
+        label="1. Alter / Angaben",
         style=discord.TextStyle.short,
         placeholder="Dein Alter...",
         required=True,
         max_length=3
     )
     frage2 = TextInput(
-        label="2. Warum möchtest du dich bewerben?",
+        label="2. Erfahrungen",
         style=discord.TextStyle.paragraph,
-        placeholder="Schreibe hier deine Motivation...",
+        placeholder="Deine Erfahrungen...",
         required=True,
         max_length=1000
     )
     frage3 = TextInput(
-        label="3. Was sind deine Stärken?",
+        label="3. Warum wir?",
         style=discord.TextStyle.paragraph,
-        placeholder="Deine Stärken...",
+        placeholder="Deine Motivation...",
         required=True,
         max_length=1000
     )
 
     async def on_submit(self, interaction: discord.Interaction):
-        await interaction.response.send_message("Deine Bewerbung wird verarbeitet und dein privates Ticket wird erstellt...", ephemeral=True)
+        await interaction.response.send_message("Deine Bewerbung wird verarbeitet...", ephemeral=True)
         
         guild = interaction.guild
         category = discord.utils.get(guild.categories, name="Bewerbungen")
@@ -66,9 +59,9 @@ class BewerbungsModal(Modal, title="Bewerbungsformular"):
             title=f"Neue Bewerbung von {interaction.user.name}",
             color=discord.Color.blue()
         )
-        embed.add_field(name="1. Alter", value=self.frage1.value, inline=False)
-        embed.add_field(name="2. Motivation", value=self.frage2.value, inline=False)
-        embed.add_field(name="3. Stärken", value=self.frage3.value, inline=False)
+        embed.add_field(name="Alter / Angaben", value=self.frage1.value, inline=False)
+        embed.add_field(name="Erfahrungen", value=self.frage2.value, inline=False)
+        embed.add_field(name="Warum wir?", value=self.frage3.value, inline=False)
 
         view = TicketActionView(interaction.user.id)
         await channel.send(content=f"{interaction.user.mention} hat sich beworben!", embed=embed, view=view)
@@ -82,8 +75,9 @@ class TicketActionView(View):
 
     @discord.ui.button(label="Annehmen", style=discord.ButtonStyle.green, emoji="✅")
     async def accept_button(self, interaction: discord.Interaction, button: Button):
-        if interaction.user.id != OWNER_ID:
-            await interaction.response.send_message("Nur der Inhaber darf das tun!", ephemeral=True)
+        # Prüft automatisch, ob der Klickende der Server-Inhaber ist
+        if interaction.user.id != interaction.guild.owner_id:
+            await interaction.response.send_message("Nur der Server-Inhaber darf das tun!", ephemeral=True)
             return
 
         guild = interaction.guild
@@ -91,16 +85,6 @@ class TicketActionView(View):
         channel = interaction.channel
 
         if member:
-            try:
-                if ROLLE_1_ID != 0:
-                    role1 = guild.get_role(ROLLE_1_ID)
-                    if role1: await member.add_roles(role1)
-                if ROLLE_2_ID != 0:
-                    role2 = guild.get_role(ROLLE_2_ID)
-                    if role2: await member.add_roles(role2)
-            except Exception as e:
-                print(f"Rollen-Fehler: {e}")
-
             try:
                 await member.send("🎉 Herzlichen Glückwunsch! Deine Bewerbung wurde **angenommen**.")
             except:
@@ -112,8 +96,9 @@ class TicketActionView(View):
 
     @discord.ui.button(label="Ablehnen", style=discord.ButtonStyle.red, emoji="❌")
     async def deny_button(self, interaction: discord.Interaction, button: Button):
-        if interaction.user.id != OWNER_ID:
-            await interaction.response.send_message("Nur der Inhaber darf das tun!", ephemeral=True)
+        # Prüft automatisch, ob der Klickende der Server-Inhaber ist
+        if interaction.user.id != interaction.guild.owner_id:
+            await interaction.response.send_message("Nur der Server-Inhaber darf das tun!", ephemeral=True)
             return
 
         guild = interaction.guild
@@ -160,7 +145,6 @@ async def ticket(interaction: discord.Interaction):
     await interaction.response.send_message("Bewerbungs-Panel erfolgreich gesendet!", ephemeral=True)
 
 
-# Bot über die Render-Umgebungsvariable starten
 token = os.getenv("TOKEN")
 if not token:
     print("FEHLER: Kein Token gefunden!")
